@@ -66,6 +66,8 @@ class Ui(QtWidgets.QMainWindow):
           # Issue: Same camera position, focal point, etc. Different camera positions/rotations for each modalitity.
           # Possible reason: Different data, voxel size, intital orientation?
           # Solution: ?
+          # Issue: Shared camera that chares movements across modalities - only updates when each modality is interacted with.
+          # SOlution: Constantly update each rendering / share interactors ?
           self.camera = vtk.vtkCamera()
           self.camera.SetViewUp(0., -1., 0.)     
           self.camera.SetPosition(-500, 100, 100)
