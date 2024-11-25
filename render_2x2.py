@@ -11,12 +11,6 @@ from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 
-from vtkmodules.vtkRenderingParallel import (
-    vtkCompositedSynchronizedRenderers,
-    vtkSynchronizedRenderWindows,
-)
-
-
 # get data path from the first argument given
 #fname = sys.argv[1]
 
