@@ -21,7 +21,8 @@ fname_swi = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiMag.nii.gz
 
 fname_phase = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiPhase.nii.gz'
 
-fname_t1 = 'UB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_t1.nii.gz'
+fname_t1 = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_t1.nii.gz'
+
 
 
 
@@ -36,7 +37,7 @@ class Ui(QtWidgets.QMainWindow):
           uic.loadUi('MVis.ui', self)
 
           # Set placeholder text in text field
-          # Not sure why this doesn't work
+          # Not sure why this doesn't work - only works after 1st press?
           self.comments_textfield.clear()
           self.comments_textfield.setPlaceholderText("Text field")
 
@@ -56,63 +57,86 @@ class Ui(QtWidgets.QMainWindow):
           self.swi_layout.addWidget(self.swi_widget)
           self.phase_layout.addWidget(self.phase_widget)
           
-          self.iren = self.flair_widget.GetRenderWindow().GetInteractor()
-          self.ren = vtk.vtkRenderer()
-          self.flair_widget.GetRenderWindow().AddRenderer(self.ren)
-
-          self.source = vtk.vtkNIFTIImageReader()
-          self.source.SetFileName(fname_flair)
-          self.source.Update()
-
-          self.vol_map = vtk.vtkGPUVolumeRayCastMapper()
-          self.vol_map.SetInputConnection(self.source.GetOutputPort())
+          self.t1_iren = self.t1_widget.GetRenderWindow().GetInteractor()
+          self.flair_iren = self.flair_widget.GetRenderWindow().GetInteractor()
+          self.swi_iren = self.swi_widget.GetRenderWindow().GetInteractor()
+          self.phase_iren = self.phase_widget.GetRenderWindow().GetInteractor()
           
-          self.color_transfer = vtk.vtkColorTransferFunction()
-          self.color_transfer.SetColorSpaceToRGB()
-          self.color_transfer.AddRGBPoint(0, 0, 0, 0)
-          self.color_transfer.AddRGBPoint(512, 1, 1, 1)
-
-          self.scalar_transfer = vtk.vtkPiecewiseFunction() 
-          self.scalar_transfer.AddPoint(0, 0)
-          self.scalar_transfer.AddPoint(256, 0.035)
-
-          
-          self.volume_property = vtk.vtkVolumeProperty()
-          self.volume_property.SetColor(self.color_transfer)
-          self.volume_property.SetScalarOpacity(self.scalar_transfer)
-
-          
-          self.vol_act = vtk.vtkVolume()
-          self.vol_act.SetMapper(self.vol_map)
-          self.vol_act.SetProperty(self.volume_property)
-
-          
-          self.camera = vtk.vtkCamera()
-          self.camera.SetViewUp(0.,-1.,0.)
-          self.camera.SetPosition(-500,100,100)
-          self.camera.SetFocalPoint(100,100,100)
-
-          self.ren.SetBackground(0., 0., 0.)
-          
-          self.ren.SetActiveCamera(self.camera)
-
-          self.ren.AddActor(self.vol_act)
+          self.flair_renderer = self.setup_renderer(fname_flair, self.flair_widget)
+          self.swi_renderer = self.setup_renderer(fname_swi, self.swi_widget)
+          self.phase_renderer = self.setup_renderer(fname_phase, self.phase_widget)
+          self.t1_renderer = self.setup_renderer(fname_t1, self.t1_widget)
 
           self.show()
           
-          self.iren.Initialize()
-          self.iren.Start()
+          self.t1_iren.Initialize()
+          self.flair_iren.Initialize()
+          self.swi_iren.Initialize()
+          self.phase_iren.Initialize()
+
+          self.t1_iren.Start()
+          self.flair_iren.Start()
+          self.swi_iren.Start()
+          self.phase_iren.Start()
 
 
-     
+     def setup_renderer(self, fname, render_widget):
+          
+          # Create the reader
+          reader = vtk.vtkNIFTIImageReader()
+          reader.SetFileName(fname)
+          reader.Update()
+
+          # Set up the mapper
+          mapper = vtk.vtkGPUVolumeRayCastMapper()
+          mapper.SetInputConnection(reader.GetOutputPort())
+
+          # Set up the color transfer function
+          color_transfer = vtk.vtkColorTransferFunction()
+          color_transfer.SetColorSpaceToRGB()
+          color_transfer.AddRGBPoint(0, 0, 0, 0)
+          color_transfer.AddRGBPoint(512, 1, 1, 1)
+
+          # Set up the opacity transfer function
+          scalar_transfer = vtk.vtkPiecewiseFunction()
+          scalar_transfer.AddPoint(0, 0)
+          scalar_transfer.AddPoint(256, 0.035)
+
+          # Create the volume property
+          volume_property = vtk.vtkVolumeProperty()
+          volume_property.SetColor(color_transfer)
+          volume_property.SetScalarOpacity(scalar_transfer)
+
+          # Create the volume actor
+          volume = vtk.vtkVolume()
+          volume.SetMapper(mapper)
+          volume.SetProperty(volume_property)
+
+          # Set up the renderer and camera
+          renderer = vtk.vtkRenderer()
+          render_widget.GetRenderWindow().AddRenderer(renderer)
+
+          # Create and configure the camera
+          camera = vtk.vtkCamera()
+          camera.SetViewUp(0., -1., 0.)
+          camera.SetPosition(-500, 100, 100)
+          camera.SetFocalPoint(100, 100, 100)
+          renderer.SetBackground(0., 0., 0.)
+          renderer.SetActiveCamera(camera)
+
+          # Add the volume actor to the renderer
+          renderer.AddActor(volume)
+
+          # Return the renderer to allow interaction
+          return renderer
 
      def submit(self):
 
           print("Submitted")
 
+          bad_quality = self.badQuality_checkbox.isChecked()
           prl = self.prl_checkbox.isChecked()
           cvs = self.cvs_checkbox.isChecked()
-          bad_quality = self.badQuality_checkbox.isChecked()
 
           print("bad_quality: " + str(bad_quality))
           print("prl: " + str(prl))
@@ -120,6 +144,12 @@ class Ui(QtWidgets.QMainWindow):
 
           comment = self.comments_textfield.toPlainText()
           print(comment)
+
+          # Reset states
+          self.comments_textfield.clear()
+          self.badQuality_checkbox.setCheckState(False)
+          self.prl_checkbox.setCheckState(False)
+          self.cvs_checkbox.setCheckState(False)
     
 
 
