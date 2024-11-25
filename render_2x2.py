@@ -62,6 +62,10 @@ class Ui(QtWidgets.QMainWindow):
           self.swi_iren = self.swi_widget.GetRenderWindow().GetInteractor()
           self.phase_iren = self.phase_widget.GetRenderWindow().GetInteractor()
           
+
+          # Issue: Same camera position, focal point, etc. Different camera positions/rotations for each modalitity.
+          # Possible reason: Different data, voxel size, intital orientation?
+          # Solution: ?
           self.camera = vtk.vtkCamera()
           self.camera.SetViewUp(0., -1., 0.)     
           self.camera.SetPosition(-500, 100, 100)
@@ -90,9 +94,6 @@ class Ui(QtWidgets.QMainWindow):
           # Setup renderers.
           # Issue: Handles all modalaties the same w/ regards to opacity and color.
           # Solution: Indivual setups for modalities.
-          # Issue: Same camera position, focal point, etc. Different camera positions/rotations for each modalitity.
-          # Possible reason: Different data, voxel size, intital orientation?
-          # Solution: ?
           
           # Create the reader
           reader = vtk.vtkNIFTIImageReader()
