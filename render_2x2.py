@@ -81,6 +81,13 @@ class Ui(QtWidgets.QMainWindow):
 
 
      def setup_renderer(self, fname, render_widget):
+
+          # Setup renderers.
+          # Issue: Handles all modalaties the same w/ regards to opacity and color.
+          # Solution: Indivual setups for modalities.
+          # Issue: Same camera position, focal point, etc. Different camera positions/rotations for each modalitity.
+          # Possible reason: Different data, voxel size, intital orientation?
+          # Solution: ?
           
           # Create the reader
           reader = vtk.vtkNIFTIImageReader()
@@ -118,9 +125,9 @@ class Ui(QtWidgets.QMainWindow):
 
           # Create and configure the camera
           camera = vtk.vtkCamera()
-          camera.SetViewUp(0., -1., 0.)
-          camera.SetPosition(-500, 100, 100)
-          camera.SetFocalPoint(100, 100, 100)
+          #camera.SetViewUp(0., -1., 0.)
+          #camera.SetPosition(-500, 100, 100)
+          #camera.SetFocalPoint(100, 100, 100)
           renderer.SetBackground(0., 0., 0.)
           renderer.SetActiveCamera(camera)
 
