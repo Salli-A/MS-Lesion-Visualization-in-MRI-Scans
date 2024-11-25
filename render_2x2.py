@@ -37,7 +37,7 @@ class Ui(QtWidgets.QMainWindow):
           uic.loadUi('MVis.ui', self)
 
           # Set placeholder text in text field
-          # Not sure why this doesn't work - only works after 1st press?
+          # Not sure why this doesn't work - only works after 1st 'submit'
           self.comments_textfield.clear()
           self.comments_textfield.setPlaceholderText("Text field")
 
@@ -72,6 +72,7 @@ class Ui(QtWidgets.QMainWindow):
           self.camera.SetViewUp(0., -1., 0.)     
           self.camera.SetPosition(-500, 100, 100)
           self.camera.SetFocalPoint(100, 100, 100)
+
           
           self.t1_renderer = self.setup_renderer(fname_t1, self.t1_widget)
           self.flair_renderer = self.setup_renderer(fname_flair, self.flair_widget)
@@ -139,7 +140,7 @@ class Ui(QtWidgets.QMainWindow):
 
           # Return the renderer to allow interaction
           return renderer
-
+     
      def submit(self):
 
           print("Submitted")
