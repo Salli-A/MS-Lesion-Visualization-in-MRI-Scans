@@ -11,6 +11,12 @@ from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 
+from vtkmodules.vtkRenderingParallel import (
+    vtkCompositedSynchronizedRenderers,
+    vtkSynchronizedRenderWindows,
+)
+
+
 # get data path from the first argument given
 #fname = sys.argv[1]
 
@@ -62,10 +68,15 @@ class Ui(QtWidgets.QMainWindow):
           self.swi_iren = self.swi_widget.GetRenderWindow().GetInteractor()
           self.phase_iren = self.phase_widget.GetRenderWindow().GetInteractor()
           
+          self.camera = vtk.vtkCamera()
+          self.camera.SetViewUp(0., -1., 0.)     
+          self.camera.SetPosition(-500, 100, 100)
+          self.camera.SetFocalPoint(100, 100, 100)
+          
+          self.t1_renderer = self.setup_renderer(fname_t1, self.t1_widget)
           self.flair_renderer = self.setup_renderer(fname_flair, self.flair_widget)
           self.swi_renderer = self.setup_renderer(fname_swi, self.swi_widget)
           self.phase_renderer = self.setup_renderer(fname_phase, self.phase_widget)
-          self.t1_renderer = self.setup_renderer(fname_t1, self.t1_widget)
 
           self.show()
           
@@ -123,13 +134,8 @@ class Ui(QtWidgets.QMainWindow):
           renderer = vtk.vtkRenderer()
           render_widget.GetRenderWindow().AddRenderer(renderer)
 
-          # Create and configure the camera
-          camera = vtk.vtkCamera()
-          #camera.SetViewUp(0., -1., 0.)
-          #camera.SetPosition(-500, 100, 100)
-          #camera.SetFocalPoint(100, 100, 100)
           renderer.SetBackground(0., 0., 0.)
-          renderer.SetActiveCamera(camera)
+          renderer.SetActiveCamera(self.camera)
 
           # Add the volume actor to the renderer
           renderer.AddActor(volume)
