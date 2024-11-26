@@ -152,6 +152,10 @@ class Ui(QtWidgets.QMainWindow):
           # Submit button action
           self.submit_button.clicked.connect(self.submit)
 
+          # Reset view button action
+          
+          self.reset_button.clicked.connect(self.reset_view)
+
      def submit(self):
 
           print("Submitted")
@@ -172,6 +176,12 @@ class Ui(QtWidgets.QMainWindow):
           self.badQuality_checkbox.setCheckState(False)
           self.prl_checkbox.setCheckState(False)
           self.cvs_checkbox.setCheckState(False)
+
+     def reset_view(self):
+          self.camera.SetViewUp(0., -1., 0.)     
+          self.camera.SetPosition(-500, 100, 100)
+          self.camera.SetFocalPoint(100, 100, 100)
+
     
 
 

@@ -178,6 +178,13 @@
      </widget>
     </item>
     <item>
+     <widget class="QPushButton" name="reset_button">
+      <property name="text">
+       <string>Reset view</string>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QPushButton" name="submit_button">
       <property name="text">
        <string>Submit</string>
