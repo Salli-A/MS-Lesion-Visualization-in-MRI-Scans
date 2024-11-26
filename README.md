@@ -8,4 +8,4 @@ Qt Designer UI
 Code for rendering a single MRI file.
 
 ## render_2x2.py
-Code for rendering all modalaties in the Qt UI.
+Code for rendering all modalaties in the Qt UI with synced camera movements.
