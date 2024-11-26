@@ -7,7 +7,8 @@ import pyvista as pv
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
     QApplication, QCheckBox, QLineEdit)
-from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt5.QtCore import QTimer
+
 
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
@@ -16,10 +17,10 @@ from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 #fname = sys.argv[1]
 
 # Hardcode paths for testing multiwindow qt design
+fname_t1 = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_t1.nii.gz'
 fname_flair = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_flair.nii.gz'
 fname_swi = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiMag.nii.gz'
 fname_phase = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiPhase.nii.gz'
-fname_t1 = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_t1.nii.gz'
 
 
 
@@ -28,6 +29,7 @@ class Ui(QtWidgets.QMainWindow):
      def __init__(self):
           
           super(Ui, self).__init__()
+          
           
           self.layout_setup()
 
@@ -62,6 +64,10 @@ class Ui(QtWidgets.QMainWindow):
           self.flair_renderer = self.setup_renderer(fname_flair, self.flair_widget)
           self.swi_renderer = self.setup_renderer(fname_swi, self.swi_widget)
           self.phase_renderer = self.setup_renderer(fname_phase, self.phase_widget)
+
+          self.timer = QTimer(self)
+          self.timer.timeout.connect(self.render_all)
+          self.timer.start(16)  # Approx. 60 FPS (16ms per frame)
 
           self.show()
           
@@ -124,6 +130,13 @@ class Ui(QtWidgets.QMainWindow):
 
           # Return the renderer to allow interaction
           return renderer
+     
+     def render_all(self):
+          self.t1_widget.GetRenderWindow().Render()
+          self.flair_widget.GetRenderWindow().Render()
+          self.swi_widget.GetRenderWindow().Render()
+          self.phase_widget.GetRenderWindow().Render()
+
      
      def layout_setup(self):
           
