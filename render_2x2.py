@@ -7,6 +7,7 @@ import pyvista as pv
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
     QApplication, QCheckBox, QLineEdit)
+from PyQt5.QtCore import pyqtSignal, QObject
 
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
@@ -16,13 +17,9 @@ from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 # Hardcode paths for testing multiwindow qt design
 fname_flair = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_flair.nii.gz'
-
 fname_swi = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiMag.nii.gz'
-
 fname_phase = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiPhase.nii.gz'
-
 fname_t1 = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_t1.nii.gz'
-
 
 
 
@@ -31,22 +28,9 @@ class Ui(QtWidgets.QMainWindow):
      def __init__(self):
           
           super(Ui, self).__init__()
-          uic.loadUi('MVis.ui', self)
-
-          # Load qt designer layout
-          uic.loadUi('MVis.ui', self)
-
-          # Set placeholder text in text field
-          # Not sure why this doesn't work - only works after 1st 'submit'
-          self.comments_textfield.clear()
-          self.comments_textfield.setPlaceholderText("Text field")
-
-          # Display case 'id' (only relative path minus the image mode and file type)
-          self.case_id.setText(fname_flair[:-13])
-
-          # Submit button action
-          self.submit_button.clicked.connect(self.submit)
           
+          self.layout_setup()
+
           self.t1_widget = QVTKRenderWindowInteractor(self.t1_frame)
           self.flair_widget = QVTKRenderWindowInteractor(self.flair_frame)
           self.swi_widget = QVTKRenderWindowInteractor(self.swi_frame)
@@ -141,6 +125,23 @@ class Ui(QtWidgets.QMainWindow):
           # Return the renderer to allow interaction
           return renderer
      
+     def layout_setup(self):
+          
+          uic.loadUi('MVis.ui', self)
+
+          self.setWindowTitle("Multi-modality viewer")
+
+          # Set placeholder text in text field
+          # Not sure why this doesn't work - only works after 1st 'submit'
+          self.comments_textfield.clear()
+          self.comments_textfield.setPlaceholderText("Text field")
+
+          # Display case 'id' (only relative path minus the image mode and file type)
+          self.case_id.setText(fname_flair[:-13])
+
+          # Submit button action
+          self.submit_button.clicked.connect(self.submit)
+
      def submit(self):
 
           print("Submitted")
