@@ -64,7 +64,7 @@ class Ui(QtWidgets.QMainWindow):
 
           self.timer = QTimer(self)
           self.timer.timeout.connect(self.render_all)
-          self.timer.start(12) # msec per frame
+          self.timer.start(8) # msec per frame
 
           self.show()
           
