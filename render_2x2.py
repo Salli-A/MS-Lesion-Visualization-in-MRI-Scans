@@ -43,10 +43,10 @@ class Ui(QtWidgets.QMainWindow):
           self.swi_layout.addWidget(self.swi_widget)
           self.phase_layout.addWidget(self.phase_widget)
           
-          self.t1_iren = self.t1_widget.GetRenderWindow().GetInteractor()
-          self.flair_iren = self.flair_widget.GetRenderWindow().GetInteractor()
-          self.swi_iren = self.swi_widget.GetRenderWindow().GetInteractor()
-          self.phase_iren = self.phase_widget.GetRenderWindow().GetInteractor()
+          t1_iren = self.t1_widget.GetRenderWindow().GetInteractor()
+          flair_iren = self.flair_widget.GetRenderWindow().GetInteractor()
+          swi_iren = self.swi_widget.GetRenderWindow().GetInteractor()
+          phase_iren = self.phase_widget.GetRenderWindow().GetInteractor()
           
 
           # Issue: Same camera position, focal point, etc. Different camera positions/rotations for each modalitity.
@@ -68,15 +68,15 @@ class Ui(QtWidgets.QMainWindow):
 
           self.show()
           
-          self.t1_iren.Initialize()
-          self.flair_iren.Initialize()
-          self.swi_iren.Initialize()
-          self.phase_iren.Initialize()
+          t1_iren.Initialize()
+          flair_iren.Initialize()
+          swi_iren.Initialize()
+          phase_iren.Initialize()
 
-          self.t1_iren.Start()
-          self.flair_iren.Start()
-          self.swi_iren.Start()
-          self.phase_iren.Start()
+          t1_iren.Start()
+          flair_iren.Start()
+          swi_iren.Start()
+          phase_iren.Start()
 
 
      def setup_renderer(self, fname, render_widget):
