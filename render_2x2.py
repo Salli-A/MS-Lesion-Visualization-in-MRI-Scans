@@ -79,7 +79,7 @@ class Ui(QtWidgets.QMainWindow):
           phase_iren.Start()
 
 
-     def setup_renderer(self, fname, render_widget):
+     def setup_renderer(self, fname, widget):
 
           # Setup renderers.
           # Issue: Handles all modalaties the same w/ regards to opacity and color.
@@ -88,7 +88,6 @@ class Ui(QtWidgets.QMainWindow):
           # Create the reader
           reader = vtk.vtkNIFTIImageReader()
           reader.SetFileName(fname)
-          reader.Update()
 
           # Set up the mapper
           mapper = vtk.vtkGPUVolumeRayCastMapper()
@@ -117,7 +116,7 @@ class Ui(QtWidgets.QMainWindow):
 
           # Set up the renderer and camera
           renderer = vtk.vtkRenderer()
-          render_widget.GetRenderWindow().AddRenderer(renderer)
+          widget.GetRenderWindow().AddRenderer(renderer)
 
           renderer.SetBackground(0., 0., 0.)
           renderer.SetActiveCamera(self.camera)
