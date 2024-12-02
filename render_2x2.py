@@ -70,20 +70,20 @@ class Ui(QtWidgets.QMainWindow):
      
      def render_modalities(self,filename):
           # Indivual rendering code for modalities (because of different transfer functions - can be combined into one function if it takes into account the transfer function and stuff)
-          self.t1_widget, self.t1_iren = t1_renderWindow(self,filename[0])
-          #self.t1_widget, self.t1_iren = t1_renderPlane(self,filename[0])
-          self.flair_widget, self.flair_iren = flair_renderWindow(self,filename[1])
-          self.swi_widget, self.swi_iren = swi_renderWindow(self,filename[2])
-          self.phase_widget, self.phase_iren = phase_renderWindow(self,filename[3])
+          self.t1_window, self.t1_iren = t1_renderWindow(self,filename[0])
+          #self.t1_window, self.t1_iren = t1_renderPlane(self,filename[0])
+          self.flair_window, self.flair_iren = flair_renderWindow(self,filename[1])
+          self.swi_window, self.swi_iren = swi_renderWindow(self,filename[2])
+          self.phase_window, self.phase_iren = phase_renderWindow(self,filename[3])
           
      
      def render_all(self):
           # Force rendering for camera sync
 
-          self.t1_widget.GetRenderWindow().Render()
-          self.flair_widget.GetRenderWindow().Render()
-          self.swi_widget.GetRenderWindow().Render()
-          self.phase_widget.GetRenderWindow().Render()
+          self.t1_window.Render()
+          self.flair_window.Render()
+          self.swi_window.Render()
+          self.phase_window.Render()
 
      
      def layout_setup(self):

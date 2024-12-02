@@ -20,7 +20,8 @@ def swi_renderWindow(instance, filename):
     widget = QVTKRenderWindowInteractor(instance.swi_frame)
     instance.swi_layout.addWidget(widget)
 
-    iren = widget.GetRenderWindow().GetInteractor()
+    ren_window =  widget.GetRenderWindow()
+    iren = ren_window.GetInteractor()
 
     reader = vtk.vtkNIFTIImageReader()
     reader.SetFileName(filename)
@@ -54,7 +55,7 @@ def swi_renderWindow(instance, filename):
 
     # Set up the renderer and camera
     renderer = vtk.vtkRenderer()
-    widget.GetRenderWindow().AddRenderer(renderer)
+    ren_window.AddRenderer(renderer)
 
     renderer.SetBackground(0., 0., 0.)
     renderer.SetActiveCamera(instance.camera)
@@ -62,4 +63,4 @@ def swi_renderWindow(instance, filename):
     # Add the volume actor to the renderer
     renderer.AddActor(volume)
 
-    return widget,iren
+    return ren_window,iren
