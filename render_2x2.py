@@ -34,19 +34,20 @@ class Ui(QtWidgets.QMainWindow):
           
           super(Ui, self).__init__()
           
-          
+          # Setup the buttons, text field etc.
           self.layout_setup()
          
 
           # Issue: Same camera position, focal point, etc. Different camera positions/rotations for each modalitity.
           # Possible reason: Different data, voxel size, intital orientation?
-          self.camera = vtk.vtkCamera()
-          self.camera.SetViewUp(0., -1., 0.)     
-          self.camera.SetPosition(-500, 100, 100)
-          self.camera.SetFocalPoint(100, 100, 100)
+          # Solution rotate the SWI and phase modalities - want to use same camera for sync (at elast for qtWindow, maybe doens't matter for planar views)
+          
+          # One camera for all modalities
+          self.setup_camera()
 
           self.render_modalities(files)
           
+          # Timer for rendering across modalities for 'sync'
           self.timer = QTimer(self)
           self.timer.timeout.connect(self.render_all)
           self.timer.start(8) # msec per frame
@@ -65,6 +66,7 @@ class Ui(QtWidgets.QMainWindow):
           self.phase_iren.Start()
      
      def render_modalities(self,filename):
+          # Indivual rendering code for modalities (because of different transfer functions - can be combined into one function if it takes into account the transfer function and stuff)
           self.t1_widget, self.t1_iren = t1_renderWindow(self,filename[0])
           self.flair_widget, self.flair_iren = flair_renderWindow(self,filename[1])
           self.swi_widget, self.swi_iren = swi_renderWindow(self,filename[2])
@@ -119,8 +121,18 @@ class Ui(QtWidgets.QMainWindow):
           self.badQuality_checkbox.setCheckState(False)
           self.prl_checkbox.setCheckState(False)
           self.cvs_checkbox.setCheckState(False)
+          self.reset_view()
+
+          # to-do: go to next image?
+
 
      def reset_view(self):
+          self.camera.SetViewUp(0., -1., 0.)     
+          self.camera.SetPosition(-500, 100, 100)
+          self.camera.SetFocalPoint(100, 100, 100)
+
+     def setup_camera(self):
+          self.camera = vtk.vtkCamera()
           self.camera.SetViewUp(0., -1., 0.)     
           self.camera.SetPosition(-500, 100, 100)
           self.camera.SetFocalPoint(100, 100, 100)
