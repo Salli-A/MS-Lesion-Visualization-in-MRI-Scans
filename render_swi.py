@@ -16,6 +16,7 @@ from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 def swi_renderWindow(instance, filename):
 
+
     widget = QVTKRenderWindowInteractor(instance.swi_frame)
     instance.swi_layout.addWidget(widget)
 
@@ -31,6 +32,7 @@ def swi_renderWindow(instance, filename):
     # Set up the mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()
     mapper.SetInputConnection(reader.GetOutputPort())
+
 
     # Set up the color transfer function
     color_transfer = vtk.vtkColorTransferFunction()
