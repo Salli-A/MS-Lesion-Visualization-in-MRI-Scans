@@ -20,10 +20,7 @@ def t1_renderWindow(instance, filename):
     instance.t1_layout.addWidget(widget)
 
     iren = widget.GetRenderWindow().GetInteractor()
-    renderer = vtk.vtkRenderer()
-    widget.GetRenderWindow().AddRenderer(renderer)
 
-    
     reader = vtk.vtkNIFTIImageReader()
     reader.SetFileName(filename)
 
@@ -71,34 +68,28 @@ def t1_renderWindow(instance, filename):
 
 def t1_renderPlane(instance, filename):
     
-    # Create the QVTKRenderWindowInteractor and add it to the layout
+    reader = vtk.vtkNIFTIImageReader()
+    reader.SetFileName(filename)
+
+    
     widget = QVTKRenderWindowInteractor(instance.t1_frame)
     instance.t1_layout.addWidget(widget)
 
-    # Get the interactor and renderer
     iren = widget.GetRenderWindow().GetInteractor()
+
     renderer = vtk.vtkRenderer()
+    renderer.SetBackground(0., 0., 0.)
+    renderer.SetActiveCamera(instance.camera)
+
     widget.GetRenderWindow().AddRenderer(renderer)
+    
 
-    # Load the NIfTI image
-    reader = vtk.vtkNIFTIImageReader()
-    reader.SetFileName(filename)
-    reader.Update()
+    plane_widget = vtk.vtkImagePlaneWidget()
+    plane_widget.SetInputData(reader.GetOutput())
+    plane_widget.SetInteractor(iren)
+    plane_widget.On()
 
-    # Create the image plane widget
-    image_plane_widget = vtk.vtkImagePlaneWidget()
-    image_plane_widget.SetInteractor(iren)
-    image_plane_widget.SetInputData(reader.GetOutput())
 
-    # Configure the image plane widget
-    image_plane_widget.SetPlaneOrientationToZAxes()  # Default to Z-axis
-    image_plane_widget.SetSliceIndex(reader.GetOutput().GetExtent()[5] // 2)  # Center slice
-    image_plane_widget.DisplayTextOn()  # Display slice index info
-    image_plane_widget.SetPicker(vtk.vtkCellPicker())  # Picker for interaction
-    image_plane_widget.On()
 
-    # Set up the renderer
-    renderer.SetBackground(0.0, 0.0, 0.0)
-    widget.GetRenderWindow().Render()
 
     return widget, iren

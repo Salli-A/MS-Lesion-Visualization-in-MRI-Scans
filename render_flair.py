@@ -20,9 +20,6 @@ def flair_renderWindow(instance, filename):
     instance.flair_layout.addWidget(widget)
 
     iren = widget.GetRenderWindow().GetInteractor()
-    renderer = vtk.vtkRenderer()
-    widget.GetRenderWindow().AddRenderer(renderer)
-
     
     reader = vtk.vtkNIFTIImageReader()
     reader.SetFileName(filename)
