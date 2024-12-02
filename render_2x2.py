@@ -70,55 +70,6 @@ class Ui(QtWidgets.QMainWindow):
           self.swi_widget, self.swi_iren = swi_renderWindow(self,filename[2])
           self.phase_widget, self.phase_iren = phase_renderWindow(self,filename[3])
           
-
-
-     def setup_renderer(self, fname, widget):
-
-          # Setup renderers.
-          # Issue: Handles all modalaties the same w/ regards to opacity and color.
-          # Solution: Indivual setups for modalities.
-          
-          # Create the reader
-          reader = vtk.vtkNIFTIImageReader()
-          reader.SetFileName(fname)
-
-          # Set up the mapper
-          mapper = vtk.vtkGPUVolumeRayCastMapper()
-          mapper.SetInputConnection(reader.GetOutputPort())
-
-          # Set up the color transfer function
-          color_transfer = vtk.vtkColorTransferFunction()
-          color_transfer.SetColorSpaceToRGB()
-          color_transfer.AddRGBPoint(0, 0, 0, 0)
-          color_transfer.AddRGBPoint(512, 1, 1, 1)
-
-          # Set up the opacity transfer function
-          scalar_transfer = vtk.vtkPiecewiseFunction()
-          scalar_transfer.AddPoint(0, 0)
-          scalar_transfer.AddPoint(256, 0.035)
-
-          # Create the volume property
-          volume_property = vtk.vtkVolumeProperty()
-          volume_property.SetColor(color_transfer)
-          volume_property.SetScalarOpacity(scalar_transfer)
-
-          # Create the volume actor
-          volume = vtk.vtkVolume()
-          volume.SetMapper(mapper)
-          volume.SetProperty(volume_property)
-
-          # Set up the renderer and camera
-          renderer = vtk.vtkRenderer()
-          widget.GetRenderWindow().AddRenderer(renderer)
-
-          renderer.SetBackground(0., 0., 0.)
-          renderer.SetActiveCamera(self.camera)
-
-          # Add the volume actor to the renderer
-          renderer.AddActor(volume)
-
-          # Return the renderer to allow interaction
-          return renderer
      
      def render_all(self):
           self.t1_widget.GetRenderWindow().Render()
