@@ -15,22 +15,19 @@ from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 
 def swi_renderWindow(instance, filename):
-
-
+    
     widget = QVTKRenderWindowInteractor(instance.swi_frame)
     instance.swi_layout.addWidget(widget)
 
-    ren_window =  widget.GetRenderWindow()
+    ren_window = widget.GetRenderWindow()
     iren = ren_window.GetInteractor()
 
     reader = vtk.vtkNIFTIImageReader()
     reader.SetFileName(filename)
 
-
     # Set up the mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()
     mapper.SetInputConnection(reader.GetOutputPort())
-
 
     # Set up the color transfer function
     color_transfer = vtk.vtkColorTransferFunction()
@@ -53,14 +50,29 @@ def swi_renderWindow(instance, filename):
     volume.SetMapper(mapper)
     volume.SetProperty(volume_property)
 
+    # Compute the center of the volume
+    reader.Update()
+    bounds = reader.GetOutput().GetBounds()
+    center_x = (bounds[0] + bounds[1]) / 2.0
+    center_y = (bounds[2] + bounds[3]) / 2.0
+    center_z = (bounds[4] + bounds[5]) / 2.0
+
+    # Apply transformations to the volume
+    transform = vtk.vtkTransform()
+    transform.Translate(center_x, center_y, center_z)  # Move to center
+    transform.RotateZ(-90)  # Rotate 90 degrees around the Z-axis
+    transform.RotateY(90)  # Rotate 90 degrees around the Y-axis
+    transform.Translate(-center_x, -center_y, -center_z)  # Move back
+    volume.SetUserTransform(transform)
+
     # Set up the renderer and camera
     renderer = vtk.vtkRenderer()
     ren_window.AddRenderer(renderer)
 
-    renderer.SetBackground(0., 0., 0.)
+    renderer.SetBackground(0.0, 0.0, 0.0)
     renderer.SetActiveCamera(instance.camera)
 
     # Add the volume actor to the renderer
     renderer.AddActor(volume)
 
-    return ren_window,iren
+    return ren_window, iren

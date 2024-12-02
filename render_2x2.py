@@ -132,7 +132,7 @@ class Ui(QtWidgets.QMainWindow):
 
 
      def reset_view(self):
-          self.camera.SetViewUp(0., -1., 0.)     
+          self.camera.SetViewUp(0., 1., 0.)     
           self.camera.SetPosition(-500, 100, 100)
           self.camera.SetFocalPoint(100, 100, 100)
 
