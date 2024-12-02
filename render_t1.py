@@ -65,32 +65,80 @@ def t1_renderWindow(instance, filename):
     return ren_window,iren
 
 
-
-
 def t1_renderPlane(instance, filename):
-    
-    reader = vtk.vtkNIFTIImageReader()
-    reader.SetFileName(filename)
-
     
     widget = QVTKRenderWindowInteractor(instance.t1_frame)
     instance.t1_layout.addWidget(widget)
 
-    iren = widget.GetRenderWindow().GetInteractor()
-
+    # Set up the renderer and camera
     renderer = vtk.vtkRenderer()
     renderer.SetBackground(0., 0., 0.)
     renderer.SetActiveCamera(instance.camera)
 
-    widget.GetRenderWindow().AddRenderer(renderer)
+    ren_window =  widget.GetRenderWindow()
+    ren_window.AddRenderer(renderer)
+
+    interactor = ren_window.GetInteractor()
+
+    reader = vtk.vtkNIFTIImageReader()
+    reader.SetFileName(filename)
+    reader.Update()
+
+    # Create an outline of the dataset
+    outline = vtk.vtkOutlineFilter()
+    outline.SetInputConnection(reader.GetOutputPort())
+    
+    outline_mapper = vtk.vtkPolyDataMapper()
+    outline_mapper.SetInputConnection(outline.GetOutputPort())
+
+    outline_actor = vtk.vtkActor()
+    outline_actor.SetMapper(outline_mapper)
     
 
-    plane_widget = vtk.vtkImagePlaneWidget()
-    plane_widget.SetInputData(reader.GetOutput())
-    plane_widget.SetInteractor(iren)
-    plane_widget.On()
+    # Set up the Volume mapper
+    volume_mapper = vtk.vtkGPUVolumeRayCastMapper()
+    volume_mapper.SetInputConnection(reader.GetOutputPort())
+
+    # Set up the color transfer function
+    color_transfer = vtk.vtkColorTransferFunction()
+    color_transfer.SetColorSpaceToRGB()
+    color_transfer.AddRGBPoint(0, 0, 0, 0)
+    color_transfer.AddRGBPoint(512, 1, 1, 1)
+
+    # Set up the opacity transfer function
+    scalar_transfer = vtk.vtkPiecewiseFunction()
+    scalar_transfer.AddPoint(0, 0)
+    scalar_transfer.AddPoint(256, 0.035)
+
+    # Create the volume property
+    volume_property = vtk.vtkVolumeProperty()
+    volume_property.SetColor(color_transfer)
+    volume_property.SetScalarOpacity(scalar_transfer)
+
+    # Create the volume actor
+    volume_actor = vtk.vtkVolume()
+    volume_actor.SetMapper(volume_mapper)
+    volume_actor.SetProperty(volume_property)
+        
+    # X plane widget
+    plane_widget_x = vtk.vtkImagePlaneWidget()
+    plane_widget_x.SetInputConnection(reader.GetOutputPort())
+    plane_widget_x.SetPlaneOrientationToXAxes()
+    plane_widget_x.SetSliceIndex(reader.GetOutput().GetDimensions()[0] // 2)
+    plane_widget_x.DisplayTextOn()
+
+    picker_x = vtk.vtkCellPicker()
+    picker_x.SetTolerance(0.005)
+    plane_widget_x.SetPicker(picker_x)
+
+    plane_widget_x.SetKeyPressActivationValue("x")
+    plane_widget_x.SetInteractor(interactor)
+    plane_widget_x.On()
+    
 
 
+    # Add the actors to the renderer
+    renderer.AddActor(outline_actor)
+    renderer.AddActor(volume_actor)
 
-
-    return widget, iren
+    return ren_window,interactor
