@@ -3,6 +3,7 @@ import vtk
 import sys
 import pyvista as pv
 
+from render_t1 import t1_render
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
@@ -33,17 +34,14 @@ class Ui(QtWidgets.QMainWindow):
           
           self.layout_setup()
 
-          self.t1_widget = QVTKRenderWindowInteractor(self.t1_frame)
           self.flair_widget = QVTKRenderWindowInteractor(self.flair_frame)
           self.swi_widget = QVTKRenderWindowInteractor(self.swi_frame)
           self.phase_widget = QVTKRenderWindowInteractor(self.phase_frame)
           
-          self.t1_layout.addWidget(self.t1_widget)
           self.flair_layout.addWidget(self.flair_widget)
           self.swi_layout.addWidget(self.swi_widget)
           self.phase_layout.addWidget(self.phase_widget)
           
-          t1_iren = self.t1_widget.GetRenderWindow().GetInteractor()
           flair_iren = self.flair_widget.GetRenderWindow().GetInteractor()
           swi_iren = self.swi_widget.GetRenderWindow().GetInteractor()
           phase_iren = self.phase_widget.GetRenderWindow().GetInteractor()
@@ -56,8 +54,7 @@ class Ui(QtWidgets.QMainWindow):
           self.camera.SetPosition(-500, 100, 100)
           self.camera.SetFocalPoint(100, 100, 100)
 
-          
-          self.t1_renderer = self.setup_renderer(fname_t1, self.t1_widget)
+          t1_iren = self.t1(fname_t1)
           self.flair_renderer = self.setup_renderer(fname_flair, self.flair_widget)
           self.swi_renderer = self.setup_renderer(fname_swi, self.swi_widget)
           self.phase_renderer = self.setup_renderer(fname_phase, self.phase_widget)
@@ -68,6 +65,7 @@ class Ui(QtWidgets.QMainWindow):
 
           self.show()
           
+          
           t1_iren.Initialize()
           flair_iren.Initialize()
           swi_iren.Initialize()
@@ -77,6 +75,11 @@ class Ui(QtWidgets.QMainWindow):
           flair_iren.Start()
           swi_iren.Start()
           phase_iren.Start()
+     
+     def t1(self,filename):
+          self.t1_widget, t1_iren = t1_render(self,filename)
+          return t1_iren
+          
 
 
      def setup_renderer(self, fname, widget):

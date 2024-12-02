@@ -14,15 +14,14 @@ from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 
 
+def t1_render(instance, filename):
 
-def t1_render(self, filename):
-
-    widget = QVTKRenderWindowInteractor(self.t1_frame)
-    self.t1_layout.addWidget(self.widget)
+    widget = QVTKRenderWindowInteractor(instance.t1_frame)
+    instance.t1_layout.addWidget(widget)
 
     iren = widget.GetRenderWindow().GetInteractor()
     renderer = vtk.vtkRenderer()
-    widget.GetRenderWindow().AddRenderer(self.ren)
+    widget.GetRenderWindow().AddRenderer(renderer)
 
     
     reader = vtk.vtkNIFTIImageReader()
@@ -59,10 +58,9 @@ def t1_render(self, filename):
     widget.GetRenderWindow().AddRenderer(renderer)
 
     renderer.SetBackground(0., 0., 0.)
-    renderer.SetActiveCamera(self.camera)
+    renderer.SetActiveCamera(instance.camera)
 
     # Add the volume actor to the renderer
     renderer.AddActor(volume)
 
-    return iren
-
+    return widget,iren
