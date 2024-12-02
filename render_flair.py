@@ -14,10 +14,10 @@ from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 
 
-def t1_renderWindow(instance, filename):
+def flair_renderWindow(instance, filename):
 
-    widget = QVTKRenderWindowInteractor(instance.t1_frame)
-    instance.t1_layout.addWidget(widget)
+    widget = QVTKRenderWindowInteractor(instance.flair_frame)
+    instance.flair_layout.addWidget(widget)
 
     iren = widget.GetRenderWindow().GetInteractor()
     renderer = vtk.vtkRenderer()

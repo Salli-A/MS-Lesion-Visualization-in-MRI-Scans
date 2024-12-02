@@ -3,7 +3,10 @@ import vtk
 import sys
 import pyvista as pv
 
-from render_t1 import t1_render
+from render_t1 import t1_renderWindow
+from render_flair import flair_renderWindow
+from render_swi import swi_renderWindow
+from render_phase import phase_renderWindow
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
@@ -15,15 +18,15 @@ from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 
 # get data path from the first argument given
-#fname = sys.argv[1]
+#file = sys.argv[1]
 
 # Hardcode paths for testing multiwindow qt design
-fname_t1 = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_t1.nii.gz'
-fname_flair = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_flair.nii.gz'
-fname_swi = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiMag.nii.gz'
-fname_phase = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiPhase.nii.gz'
+file_t1 = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_t1.nii.gz'
+file_flair = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_flair.nii.gz'
+file_swi = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiMag.nii.gz'
+file_phase = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiPhase.nii.gz'
 
-
+files = [file_t1, file_flair, file_swi, file_phase]
 
 
 class Ui(QtWidgets.QMainWindow):
@@ -33,19 +36,7 @@ class Ui(QtWidgets.QMainWindow):
           
           
           self.layout_setup()
-
-          self.flair_widget = QVTKRenderWindowInteractor(self.flair_frame)
-          self.swi_widget = QVTKRenderWindowInteractor(self.swi_frame)
-          self.phase_widget = QVTKRenderWindowInteractor(self.phase_frame)
-          
-          self.flair_layout.addWidget(self.flair_widget)
-          self.swi_layout.addWidget(self.swi_widget)
-          self.phase_layout.addWidget(self.phase_widget)
-          
-          flair_iren = self.flair_widget.GetRenderWindow().GetInteractor()
-          swi_iren = self.swi_widget.GetRenderWindow().GetInteractor()
-          phase_iren = self.phase_widget.GetRenderWindow().GetInteractor()
-          
+         
 
           # Issue: Same camera position, focal point, etc. Different camera positions/rotations for each modalitity.
           # Possible reason: Different data, voxel size, intital orientation?
@@ -54,11 +45,8 @@ class Ui(QtWidgets.QMainWindow):
           self.camera.SetPosition(-500, 100, 100)
           self.camera.SetFocalPoint(100, 100, 100)
 
-          t1_iren = self.t1(fname_t1)
-          self.flair_renderer = self.setup_renderer(fname_flair, self.flair_widget)
-          self.swi_renderer = self.setup_renderer(fname_swi, self.swi_widget)
-          self.phase_renderer = self.setup_renderer(fname_phase, self.phase_widget)
-
+          self.render_modalities(files)
+          
           self.timer = QTimer(self)
           self.timer.timeout.connect(self.render_all)
           self.timer.start(8) # msec per frame
@@ -66,19 +54,21 @@ class Ui(QtWidgets.QMainWindow):
           self.show()
           
           
-          t1_iren.Initialize()
-          flair_iren.Initialize()
-          swi_iren.Initialize()
-          phase_iren.Initialize()
+          self.t1_iren.Initialize()
+          self.flair_iren.Initialize()
+          self.swi_iren.Initialize()
+          self.phase_iren.Initialize()
 
-          t1_iren.Start()
-          flair_iren.Start()
-          swi_iren.Start()
-          phase_iren.Start()
+          self.t1_iren.Start()
+          self.flair_iren.Start()
+          self.swi_iren.Start()
+          self.phase_iren.Start()
      
-     def t1(self,filename):
-          self.t1_widget, t1_iren = t1_render(self,filename)
-          return t1_iren
+     def render_modalities(self,filename):
+          self.t1_widget, self.t1_iren = t1_renderWindow(self,filename[0])
+          self.flair_widget, self.flair_iren = flair_renderWindow(self,filename[1])
+          self.swi_widget, self.swi_iren = swi_renderWindow(self,filename[2])
+          self.phase_widget, self.phase_iren = phase_renderWindow(self,filename[3])
           
 
 
@@ -149,7 +139,7 @@ class Ui(QtWidgets.QMainWindow):
           self.comments_textfield.setPlaceholderText("Text field")
 
           # Display case 'id' (only relative path minus the image mode and file type)
-          self.case_id.setText(fname_flair[:-13])
+          self.case_id.setText(file_t1[:-10])
 
           # Submit button action
           self.submit_button.clicked.connect(self.submit)
