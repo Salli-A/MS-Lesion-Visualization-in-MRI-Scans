@@ -74,5 +74,8 @@ def phase_renderWindow(instance, filename):
 
     # Add the volume actor to the renderer
     renderer.AddActor(volume)
+    
+    iren.Initialize()
+    iren.Start()
 
-    return ren_window, iren
+    return ren_window

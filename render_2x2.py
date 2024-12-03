@@ -40,6 +40,9 @@ class Ui(QtWidgets.QMainWindow):
           # One camera for all modalities
           self.setup_camera()
 
+          
+          self.show()
+
           # Need a better way for deciding files
           # Render all modalities, files = (t1,flair,swi,phase)
           self.render_modalities(files)
@@ -49,25 +52,15 @@ class Ui(QtWidgets.QMainWindow):
           self.timer.timeout.connect(self.render_all)
           self.timer.start(8) # msec per frame
 
-          self.show()
           
-          
-          self.t1_iren.Initialize()
-          self.flair_iren.Initialize()
-          self.swi_iren.Initialize()
-          self.phase_iren.Initialize()
-
-          self.t1_iren.Start()
-          self.flair_iren.Start()
-          self.swi_iren.Start()
-          self.phase_iren.Start()
      
      def render_modalities(self,filename):
-          # Indivual rendering code for modalities (because of different transfer functions - can be combined into one function if it takes into account the transfer function and stuff)
-          self.t1_window, self.t1_iren = t1_renderWindow(self,filename[0])
-          self.flair_window, self.flair_iren = flair_renderWindow(self,filename[1])
-          self.swi_window, self.swi_iren = swi_renderWindow(self,filename[2])
-          self.phase_window, self.phase_iren = phase_renderWindow(self,filename[3])
+          # Indivual rendering code for modalities
+          # (Can be combined into one function if it takes into account the transfer function and stuff)
+          self.t1_window = t1_renderWindow(self,filename[0])
+          self.flair_window = flair_renderWindow(self,filename[1])
+          self.swi_window = swi_renderWindow(self,filename[2])
+          self.phase_window = phase_renderWindow(self,filename[3])
           
      
      def render_all(self):
@@ -96,7 +89,6 @@ class Ui(QtWidgets.QMainWindow):
           self.submit_button.clicked.connect(self.submit)
 
           # Reset view button action
-          
           self.reset_button.clicked.connect(self.reset_view)
 
      def submit(self):

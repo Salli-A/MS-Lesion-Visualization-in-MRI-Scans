@@ -62,7 +62,10 @@ def t1_renderWindow(instance, filename):
     # Add the volume actor to the renderer
     renderer.AddActor(volume)
 
-    return ren_window,iren
+    iren.Initialize()
+    iren.Start()
+
+    return ren_window
 
 
 def t1_renderPlane(instance, filename):
