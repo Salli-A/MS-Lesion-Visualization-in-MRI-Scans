@@ -83,7 +83,6 @@ def swi_renderWindow(instance, filename):
 
     return ren_window
 
-
 def swi_renderPlane(instance, filename):
     
     frame = instance.swi_frame
@@ -104,11 +103,11 @@ def swi_renderPlane(instance, filename):
     viewer = vtk.vtkImageViewer2()
     viewer.SetInputConnection(reader.GetOutputPort())
     viewer.SetRenderWindow(ren_window)
-    viewer.SetSliceOrientationToYZ()  # Saggital view
+    viewer.SetSliceOrientationToYZ()
     viewer.GetRenderer().SetBackground(0, 0, 0)
     
     # Set initial slice
-    num_slices = reader.GetOutput().GetDimensions()[2]
+    num_slices = reader.GetOutput().GetDimensions()[0]  # Use the X-axis for sagittal view
     viewer.SetSlice(num_slices // 2)
 
     # Zoom in by adjusting the camera
@@ -121,7 +120,7 @@ def swi_renderPlane(instance, filename):
         def __init__(self, viewer):
             super().__init__()
             self.viewer = viewer
-            self.num_slices = viewer.GetInput().GetDimensions()[2]
+            self.num_slices = viewer.GetInput().GetDimensions()[0]  # Use the X-axis for sagittal view
             self.AddObserver("MouseWheelForwardEvent", self.on_scroll_event)
             self.AddObserver("MouseWheelBackwardEvent", self.on_scroll_event)
         
