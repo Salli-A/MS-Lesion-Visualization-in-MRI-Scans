@@ -4,9 +4,9 @@ import sys
 import pyvista as pv
 
 from render_t1 import t1_renderWindow, t1_renderPlane, t1_renderPlaneVolume
-from render_flair import flair_renderWindow, flair_renderPlane
-from render_swi import swi_renderWindow, swi_renderPlane
-from render_phase import phase_renderWindow, phase_renderPlane
+from render_flair import flair_renderWindow, flair_renderPlane, flair_renderPlaneVolume
+from render_swi import swi_renderWindow, swi_renderPlane, swi_renderPlaneVolume
+from render_phase import phase_renderWindow, phase_renderPlane, phase_renderPlaneVolume
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
@@ -76,9 +76,9 @@ class Ui(QtWidgets.QMainWindow):
 
           # Testing with volume slices
           self.t1_window = t1_renderPlaneVolume(self,filename[0])
-          self.flair_window = flair_renderWindow(self,filename[1])
-          self.swi_window = swi_renderWindow(self,filename[2])
-          self.phase_window = phase_renderWindow(self,filename[3])
+          self.flair_window = flair_renderPlaneVolume(self,filename[1])
+          self.swi_window = swi_renderPlaneVolume(self,filename[2])
+          self.phase_window = phase_renderPlaneVolume(self,filename[3])
 
 
           
@@ -120,7 +120,7 @@ class Ui(QtWidgets.QMainWindow):
           self.submit_button.clicked.connect(self.submit)
 
           # Reset view button action
-          self.reset_button.clicked.connect(self.set_view)
+          self.reset_button.clicked.connect(self.reset_view)
 
      def submit(self):
           
@@ -142,19 +142,32 @@ class Ui(QtWidgets.QMainWindow):
           self.badQuality_checkbox.setCheckState(False)
           self.prl_checkbox.setCheckState(False)
           self.cvs_checkbox.setCheckState(False)
-          self.set_view()
+          self.reset_view()
 
           # to-do: go to next image?
+          # to-do: save output to csv/something else
 
+     def set_view(self, viewUp=None, position=None, focalPoint=None):
+          if viewUp is not None:
+               self.camera_viewUp = viewUp
+          if position is not None:
+               self.camera_position = position
+          if focalPoint is not None:
+               self.camera_focalPoint = focalPoint
+          self.reset_view()
 
-     def set_view(self):
-          self.camera.SetViewUp(0., -1., 0.)     
-          self.camera.SetPosition(-500, 100, 200)
-          self.camera.SetFocalPoint(100, 100, 100)
+     def reset_view(self):
+          self.camera.SetViewUp(self.camera_viewUp)
+          self.camera.SetPosition(self.camera_position)
+          self.camera.SetFocalPoint(self.camera_focalPoint)
+
 
      def setup_camera(self):
           self.camera = vtk.vtkCamera()
-          self.set_view()
+          viewUp = (0.,-1.,0)
+          position = (-500, 100, 200)
+          focalPoint = (100, 100, 100)
+          self.set_view(viewUp, position, focalPoint)
 
     
 

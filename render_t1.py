@@ -142,17 +142,7 @@ def t1_renderPlane(instance, filename):
 
 
 def t1_renderPlaneVolume(instance, filename, slice_thickness=12):
-    """
-    Renders a 12-voxel-thick axial volume slice centered in the middle of the MRI scan.
-
-    Parameters:
-    - instance: The parent object containing frame and layout for VTK rendering.
-    - filename: Path to the MRI NIFTI file.
-    - slice_thickness: Thickness of the slice in voxels (default is 12).
-
-    Returns:
-    - ren_window: The VTK render window object.
-    """
+    
     frame = instance.t1_frame
     layout = instance.t1_layout
 
@@ -170,11 +160,29 @@ def t1_renderPlaneVolume(instance, filename, slice_thickness=12):
     # Get the dimensions of the volume to calculate the center
     extent = reader.GetOutput().GetExtent()
     z_min, z_max = extent[4], extent[5]
-    slice_center = (z_min + z_max) / 2  # Center along the Z-axis
+    z_center = (z_min + z_max) / 2  # Center along the Z-axis
 
+    y_min, y_max = extent[2], extent[3]
+    y_center = (y_min + y_max) / 2
+
+    x_min, x_max = extent[0], extent[1]
+    x_center = (x_min + x_max) / 2
+
+    
     # Calculate slice bounds based on center and thickness
-    slice_min = slice_center - slice_thickness / 2
-    slice_max = slice_center + slice_thickness / 2
+    slice_min = z_center - slice_thickness / 2
+    slice_max = z_center + slice_thickness / 2
+
+
+    # Update camera parameters
+    distance = max(x_max - x_min, y_max - y_min, z_max - z_min)*1.5
+
+    focalPoint = (x_center, y_center, z_center)
+    position = (x_center, y_center, z_center+distance) 
+
+    instance.set_view(focalPoint = focalPoint, position = position)
+
+
 
     # Set up the mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()
