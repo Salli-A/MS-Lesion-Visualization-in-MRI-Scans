@@ -88,7 +88,7 @@ class Ui(QtWidgets.QMainWindow):
           self.submit_button.clicked.connect(self.submit)
 
           # Reset view button action
-          self.reset_button.clicked.connect(self.reset_view)
+          self.reset_button.clicked.connect(self.set_view)
 
      def submit(self):
           
@@ -110,19 +110,19 @@ class Ui(QtWidgets.QMainWindow):
           self.badQuality_checkbox.setCheckState(False)
           self.prl_checkbox.setCheckState(False)
           self.cvs_checkbox.setCheckState(False)
-          self.reset_view()
+          self.set_view()
 
           # to-do: go to next image?
 
 
-     def reset_view(self):
+     def set_view(self):
           self.camera.SetViewUp(0., -1., 0.)     
           self.camera.SetPosition(-500, 100, 200)
           self.camera.SetFocalPoint(100, 100, 100)
 
      def setup_camera(self):
           self.camera = vtk.vtkCamera()
-          self.reset_view()
+          self.set_view()
 
     
 
