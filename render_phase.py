@@ -150,7 +150,6 @@ def phase_renderPlaneVolume(instance, filename, slice_thickness=12):
     
     frame = instance.phase_frame
     layout = instance.phase_layout
-
     widget = QVTKRenderWindowInteractor(frame)
     layout.addWidget(widget)
 
@@ -164,18 +163,18 @@ def phase_renderPlaneVolume(instance, filename, slice_thickness=12):
 
     # Get the dimensions of the volume to calculate the center
     extent = reader.GetOutput().GetExtent()
-    z_min, z_max = extent[4], extent[5]
-    z_center = (z_min + z_max) / 2  # Center along the Z-axis
+    x_min, x_max = extent[0], extent[1]
+    x_center = (x_min + x_max) / 2  # Center along the X-axis
 
     y_min, y_max = extent[2], extent[3]
     y_center = (y_min + y_max) / 2
 
-    x_min, x_max = extent[0], extent[1]
-    x_center = (x_min + x_max) / 2
+    z_min, z_max = extent[4], extent[5]
+    z_center = (z_min + z_max) / 2
 
-    # Initial slice bounds
-    slice_min = z_center - slice_thickness / 2
-    slice_max = z_center + slice_thickness / 2
+    # Initial slice bounds for sagittal view
+    slice_min = x_center - slice_thickness / 2
+    slice_max = x_center + slice_thickness / 2
 
     # Set up the mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()
@@ -184,9 +183,9 @@ def phase_renderPlaneVolume(instance, filename, slice_thickness=12):
     # Restrict the mapper to the initial slice bounds
     mapper.CroppingOn()
     mapper.SetCroppingRegionPlanes(
-        float("-inf"), float("inf"),  # X-axis (full range)
+        slice_min, slice_max,          # X-axis (slice range)
         float("-inf"), float("inf"),  # Y-axis (full range)
-        slice_min, slice_max          # Z-axis (slice range)
+        float("-inf"), float("inf")   # Z-axis (full range)
     )
     mapper.SetCroppingRegionFlags(vtk.VTK_CROP_SUBVOLUME)
 
@@ -199,7 +198,7 @@ def phase_renderPlaneVolume(instance, filename, slice_thickness=12):
     # Set up the opacity transfer function
     scalar_transfer = vtk.vtkPiecewiseFunction()
     scalar_transfer.AddPoint(0, 0)
-    scalar_transfer.AddPoint(256, 0.6)
+    scalar_transfer.AddPoint(256, 0.4)
 
     # Create the volume property
     volume_property = vtk.vtkVolumeProperty()
@@ -233,22 +232,22 @@ def phase_renderPlaneVolume(instance, filename, slice_thickness=12):
             self.step = slice_thickness / 2
 
         def scroll_forward(self, obj, event):
-            self.slice_min = min(self.slice_min + self.step, z_max - slice_thickness)
+            self.slice_min = min(self.slice_min + self.step, x_max - slice_thickness)
             self.slice_max = self.slice_min + slice_thickness
             self.mapper.SetCroppingRegionPlanes(
-                float("-inf"), float("inf"),  # X-axis (full range)
-                float("-inf"), float("inf"),  # Y-axis (full range)
-                self.slice_min, self.slice_max
+                self.slice_min, self.slice_max,  # X-axis (slice range)
+                float("-inf"), float("inf"),    # Y-axis (full range)
+                float("-inf"), float("inf")     # Z-axis (full range)
             )
             ren_window.Render()
 
         def scroll_backward(self, obj, event):
-            self.slice_min = max(self.slice_min - self.step, z_min)
+            self.slice_min = max(self.slice_min - self.step, x_min)
             self.slice_max = self.slice_min + slice_thickness
             self.mapper.SetCroppingRegionPlanes(
-                float("-inf"), float("inf"),  # X-axis (full range)
-                float("-inf"), float("inf"),  # Y-axis (full range)
-                self.slice_min, self.slice_max
+                self.slice_min, self.slice_max,  # X-axis (slice range)
+                float("-inf"), float("inf"),    # Y-axis (full range)
+                float("-inf"), float("inf")     # Z-axis (full range)
             )
             ren_window.Render()
 
