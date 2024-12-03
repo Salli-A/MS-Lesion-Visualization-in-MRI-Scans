@@ -10,7 +10,7 @@ from render_phase import phase_renderWindow, phase_renderPlane
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
-    QApplication, QCheckBox, QLineEdit)
+    QApplication, QCheckBox, QLineEdit, QDesktopWidget)
 from PyQt5.QtCore import QTimer
 
 
@@ -79,10 +79,21 @@ class Ui(QtWidgets.QMainWindow):
 
      
      def layout_setup(self):
-          
           uic.loadUi('MVis.ui', self)
 
           self.setWindowTitle("Multi-modality viewer")
+
+          # Window size
+          window_width = 800
+          window_height = 600
+          self.resize(window_width, window_height)
+
+          # Center the window on the screen
+          screen_geometry = QDesktopWidget().availableGeometry()
+          screen_center = screen_geometry.center()
+          frame_geometry = self.frameGeometry()
+          frame_geometry.moveCenter(screen_center)
+          self.move(frame_geometry.topLeft())
 
           # Set placeholder text in text field
           self.comments_textfield.setPlaceholderText("Text field")
