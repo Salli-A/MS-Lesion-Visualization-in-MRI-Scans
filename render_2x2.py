@@ -56,7 +56,9 @@ class Ui(QtWidgets.QMainWindow):
      def render_modalities(self,filename):
           # Indivual rendering code for modalities
           # (Can be combined into one function if it takes into account the transfer function and stuff)
-          self.t1_window = t1_renderWindow(self,filename[0])
+          #self.t1_window = t1_renderWindow(self,filename[0])
+          self.t1_window = t1_renderPlane(self,filename[0])
+
           self.flair_window = flair_renderWindow(self,filename[1])
           self.swi_window = swi_renderWindow(self,filename[2])
           self.phase_window = phase_renderWindow(self,filename[3])

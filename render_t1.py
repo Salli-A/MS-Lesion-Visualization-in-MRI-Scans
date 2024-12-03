@@ -6,11 +6,12 @@ import pyvista as pv
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
-    QApplication, QCheckBox, QLineEdit)
-from PyQt5.QtCore import QTimer
+    QApplication, QCheckBox, QLineEdit, QSlider)
+from PyQt5.QtCore import Qt
 
 
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage
 
 
 
@@ -69,79 +70,49 @@ def t1_renderWindow(instance, filename):
 
 
 def t1_renderPlane(instance, filename):
-    
     widget = QVTKRenderWindowInteractor(instance.t1_frame)
     instance.t1_layout.addWidget(widget)
 
-    # Set up the renderer and camera
-    renderer = vtk.vtkRenderer()
-    renderer.SetBackground(0., 0., 0.)
-    renderer.SetActiveCamera(instance.camera)
+    ren_window = widget.GetRenderWindow()
+    iren = ren_window.GetInteractor()
 
-    ren_window =  widget.GetRenderWindow()
-    ren_window.AddRenderer(renderer)
-
-    interactor = ren_window.GetInteractor()
-
+    # Reader for the NIfTI file
     reader = vtk.vtkNIFTIImageReader()
     reader.SetFileName(filename)
     reader.Update()
 
-    # Create an outline of the dataset
-    outline = vtk.vtkOutlineFilter()
-    outline.SetInputConnection(reader.GetOutputPort())
+    # Image viewer for slice rendering
+    viewer = vtk.vtkImageViewer2()
+    viewer.SetInputConnection(reader.GetOutputPort())
+    viewer.SetRenderWindow(ren_window)
+    viewer.SetSliceOrientationToXY()  # Axial view
+    viewer.GetRenderer().SetBackground(0, 0, 0)
     
-    outline_mapper = vtk.vtkPolyDataMapper()
-    outline_mapper.SetInputConnection(outline.GetOutputPort())
+    # Set initial slice
+    num_slices = reader.GetOutput().GetDimensions()[2]
+    viewer.SetSlice(num_slices // 2)
 
-    outline_actor = vtk.vtkActor()
-    outline_actor.SetMapper(outline_mapper)
-    
+    # Interactor style for image viewer
+    style = vtkInteractorStyleImage()
+    viewer.GetRenderWindow().GetInteractor().SetInteractorStyle(style)
 
-    # Set up the Volume mapper
-    volume_mapper = vtk.vtkGPUVolumeRayCastMapper()
-    volume_mapper.SetInputConnection(reader.GetOutputPort())
+    # Slider for scrolling slices
+    slider = QSlider(instance.t1_frame)
+    slider.setOrientation(Qt.Horizontal)
+    slider.setMinimum(0)
+    slider.setMaximum(num_slices - 1)
+    slider.setValue(num_slices // 2)
+    instance.t1_layout.addWidget(slider)
 
-    # Set up the color transfer function
-    color_transfer = vtk.vtkColorTransferFunction()
-    color_transfer.SetColorSpaceToRGB()
-    color_transfer.AddRGBPoint(0, 0, 0, 0)
-    color_transfer.AddRGBPoint(512, 1, 1, 1)
+    # Slider value changed event
+    def on_slider_value_changed(value):
+        viewer.SetSlice(value)
+        viewer.Render()
 
-    # Set up the opacity transfer function
-    scalar_transfer = vtk.vtkPiecewiseFunction()
-    scalar_transfer.AddPoint(0, 0)
-    scalar_transfer.AddPoint(256, 0.035)
+    slider.valueChanged.connect(on_slider_value_changed)
 
-    # Create the volume property
-    volume_property = vtk.vtkVolumeProperty()
-    volume_property.SetColor(color_transfer)
-    volume_property.SetScalarOpacity(scalar_transfer)
+    # Initialize interactor
+    iren.Initialize()
+    viewer.Render()
 
-    # Create the volume actor
-    volume_actor = vtk.vtkVolume()
-    volume_actor.SetMapper(volume_mapper)
-    volume_actor.SetProperty(volume_property)
-        
-    # X plane widget
-    plane_widget_x = vtk.vtkImagePlaneWidget()
-    plane_widget_x.SetInputConnection(reader.GetOutputPort())
-    plane_widget_x.SetPlaneOrientationToXAxes()
-    plane_widget_x.SetSliceIndex(reader.GetOutput().GetDimensions()[0] // 2)
-    plane_widget_x.DisplayTextOn()
-
-    picker_x = vtk.vtkCellPicker()
-    picker_x.SetTolerance(0.005)
-    plane_widget_x.SetPicker(picker_x)
-
-    plane_widget_x.SetKeyPressActivationValue("x")
-    plane_widget_x.SetInteractor(interactor)
-    plane_widget_x.On()
-    
-
-
-    # Add the actors to the renderer
-    renderer.AddActor(outline_actor)
-    renderer.AddActor(volume_actor)
-
-    return ren_window,interactor
+    return ren_window
