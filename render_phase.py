@@ -150,6 +150,8 @@ def phase_renderPlaneVolume(instance, filename, slice_thickness=12):
     
     frame = instance.phase_frame
     layout = instance.phase_layout
+    
+    
     widget = QVTKRenderWindowInteractor(frame)
     layout.addWidget(widget)
 
@@ -200,16 +202,26 @@ def phase_renderPlaneVolume(instance, filename, slice_thickness=12):
     scalar_transfer.AddPoint(0, 0)
     scalar_transfer.AddPoint(256, 0.4)
 
+    
     # Create the volume property
     volume_property = vtk.vtkVolumeProperty()
     volume_property.SetColor(color_transfer)
     volume_property.SetScalarOpacity(scalar_transfer)
     volume_property.ShadeOn()
 
+    # Translate and rotate
+    transform = vtk.vtkTransform()
+    transform.Translate(x_center, y_center, z_center)  # Move to center
+    transform.RotateZ(-90)  # Rotate 90 degrees around the Z-axis
+    transform.RotateY(90)  # Rotate 90 degrees around the Y-axis
+    transform.Translate(-x_center, -y_center, -z_center)  # Move back
+
     # Create the volume actor
     volume = vtk.vtkVolume()
     volume.SetMapper(mapper)
     volume.SetProperty(volume_property)
+    volume.SetUserTransform(transform)
+
 
     # Set up the renderer and camera
     renderer = vtk.vtkRenderer()
