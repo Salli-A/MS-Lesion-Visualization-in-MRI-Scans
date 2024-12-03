@@ -58,25 +58,28 @@ class Ui(QtWidgets.QMainWindow):
 
           # Indivual rendering code for modalities
           # (Can be combined into one function if it takes into account the transfer function and stuff)
-          """"
+         
+          """
           # Entire volume
           self.t1_window = t1_renderWindow(self,filename[0])
           self.flair_window = flair_renderWindow(self,filename[1])
           self.swi_window = swi_renderWindow(self,filename[2])
           self.phase_window = phase_renderWindow(self,filename[3])
           """
-          """"
+          """
           # 2d slices
           self.t1_window = t1_renderPlane(self,filename[0])
           self.flair_window = flair_renderPlane(self,filename[1])
           self.swi_window = swi_renderPlane(self,filename[2])
           self.phase_window = phase_renderPlane(self,filename[3])
-          """          
+          """
+
           # Testing with volume slices
           self.t1_window = t1_renderPlaneVolume(self,filename[0])
-          self.flair_window = flair_renderPlane(self,filename[1])
-          self.swi_window = swi_renderPlane(self,filename[2])
-          self.phase_window = phase_renderPlane(self,filename[3])
+          self.flair_window = flair_renderWindow(self,filename[1])
+          self.swi_window = swi_renderWindow(self,filename[2])
+          self.phase_window = phase_renderWindow(self,filename[3])
+
 
           
      

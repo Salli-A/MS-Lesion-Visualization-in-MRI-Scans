@@ -141,14 +141,13 @@ def t1_renderPlane(instance, filename):
     return ren_window
 
 
-def t1_renderPlaneVolume(instance, filename, slice_center = 50, slice_thickness=12):
+def t1_renderPlaneVolume(instance, filename, slice_thickness=12):
     """
-    Renders a 12-voxel-thick axial volume slice from an MRI scan with predefined color and opacity transfer functions.
+    Renders a 12-voxel-thick axial volume slice centered in the middle of the MRI scan.
 
     Parameters:
     - instance: The parent object containing frame and layout for VTK rendering.
     - filename: Path to the MRI NIFTI file.
-    - slice_center: The center of the slice along the Z-axis (axial axis).
     - slice_thickness: Thickness of the slice in voxels (default is 12).
 
     Returns:
@@ -167,6 +166,11 @@ def t1_renderPlaneVolume(instance, filename, slice_center = 50, slice_thickness=
     reader = vtk.vtkNIFTIImageReader()
     reader.SetFileName(filename)
     reader.Update()
+
+    # Get the dimensions of the volume to calculate the center
+    extent = reader.GetOutput().GetExtent()
+    z_min, z_max = extent[4], extent[5]
+    slice_center = (z_min + z_max) / 2  # Center along the Z-axis
 
     # Calculate slice bounds based on center and thickness
     slice_min = slice_center - slice_thickness / 2
