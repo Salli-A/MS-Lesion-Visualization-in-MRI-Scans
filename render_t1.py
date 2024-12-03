@@ -144,6 +144,7 @@ def t1_renderPlane(instance, filename):
 import vtkmodules.all as vtk
 
 def t1_renderPlaneVolume(instance, filename, slice_thickness=12):
+
     frame = instance.t1_frame
     layout = instance.t1_layout
 
@@ -203,7 +204,7 @@ def t1_renderPlaneVolume(instance, filename, slice_thickness=12):
     # Set up the opacity transfer function
     scalar_transfer = vtk.vtkPiecewiseFunction()
     scalar_transfer.AddPoint(0, 0)
-    scalar_transfer.AddPoint(256, 0.035)
+    scalar_transfer.AddPoint(256, 0.15)
 
     # Create the volume property
     volume_property = vtk.vtkVolumeProperty()
