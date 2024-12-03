@@ -39,7 +39,6 @@ class Ui(QtWidgets.QMainWindow):
           
           # One camera for all modalities
           self.setup_camera()
-
           
           self.show()
 
@@ -47,7 +46,7 @@ class Ui(QtWidgets.QMainWindow):
           # Render all modalities, files = (t1,flair,swi,phase)
           self.render_modalities(files)
           
-          # Timer for rendering across modalities for 'sync'
+          # Timer for rendering across modalities for 'sync' - noticable delay when doing 'fast' movements
           self.timer = QTimer(self)
           self.timer.timeout.connect(self.render_all)
           self.timer.start(8) # msec per frame
@@ -117,15 +116,13 @@ class Ui(QtWidgets.QMainWindow):
 
 
      def reset_view(self):
-          self.camera.SetViewUp(0., 1., 0.)     
-          self.camera.SetPosition(-500, 100, 100)
+          self.camera.SetViewUp(0., -1., 0.)     
+          self.camera.SetPosition(-500, 100, 200)
           self.camera.SetFocalPoint(100, 100, 100)
 
      def setup_camera(self):
           self.camera = vtk.vtkCamera()
-          self.camera.SetViewUp(0., -1., 0.)     
-          self.camera.SetPosition(-500, 100, 100)
-          self.camera.SetFocalPoint(100, 100, 100)
+          self.reset_view()
 
     
 
