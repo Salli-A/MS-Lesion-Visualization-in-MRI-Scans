@@ -37,9 +37,6 @@ class Ui(QtWidgets.QMainWindow):
           # Setup the buttons, text field etc.
           self.layout_setup()
           
-          # One camera for all modalities - only for renderWindow, not implemented for renderPlane
-          self.setup_camera()
-          
           self.show()
 
           # Need a better way for deciding files
@@ -57,6 +54,10 @@ class Ui(QtWidgets.QMainWindow):
           # Indivual rendering code for modalities
           # (Can be combined into one function if it takes into account the transfer function and stuff)
           """"
+          
+          # One camera for all modalities - only for renderWindow, not implemented for renderPlane
+          self.setup_camera()
+          
           self.t1_window = t1_renderWindow(self,filename[0])
           self.flair_window = flair_renderWindow(self,filename[1])
           self.swi_window = swi_renderWindow(self,filename[2])
@@ -84,8 +85,8 @@ class Ui(QtWidgets.QMainWindow):
           self.setWindowTitle("Multi-modality viewer")
 
           # Window size
-          window_width = 800
-          window_height = 600
+          window_width = 1000
+          window_height = 800
           self.resize(window_width, window_height)
 
           # Center the window on the screen
