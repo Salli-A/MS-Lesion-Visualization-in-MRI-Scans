@@ -72,8 +72,11 @@ def t1_renderWindow(instance, filename):
     return ren_window
 
 
-def t1_renderPlane(instance, filename):
 
+
+
+def t1_renderPlane(instance, filename):
+    
     frame = instance.t1_frame
     layout = instance.t1_layout
     
@@ -88,49 +91,52 @@ def t1_renderPlane(instance, filename):
     reader.SetFileName(filename)
     reader.Update()
 
+    # Flip the image along the desired axis
+    flip_y = vtk.vtkImageFlip()
+    flip_y.SetInputConnection(reader.GetOutputPort())
+    flip_y.SetFilteredAxis(1)  # Flip along the Y-axis
+    flip_y.Update()
+
+    flip_z = vtk.vtkImageFlip()
+    flip_z.SetInputConnection(flip_y.GetOutputPort())
+    flip_z.SetFilteredAxis(2)  # Flip along the Z-axis
+    flip_z.Update()
+
     # Image viewer for slice rendering
     viewer = vtk.vtkImageViewer2()
-    viewer.SetInputConnection(reader.GetOutputPort())
+    viewer.SetInputConnection(flip_z.GetOutputPort())
     viewer.SetRenderWindow(ren_window)
     viewer.SetSliceOrientationToXY()  # Axial view
     viewer.GetRenderer().SetBackground(0, 0, 0)
     
     # Set initial slice
-    num_slices = reader.GetOutput().GetDimensions()[2]
+    num_slices = flip_z.GetOutput().GetDimensions()[2]
     viewer.SetSlice(num_slices // 2)
 
-    # Interactor style for image viewer
-    style = vtkInteractorStyleImage()
-    viewer.GetRenderWindow().GetInteractor().SetInteractorStyle(style)
+    # Zoom in by adjusting the camera
+    renderer = viewer.GetRenderer()
+    camera = renderer.GetActiveCamera()
+    camera.Zoom(1.5)  # Adjust this factor to zoom in or out (1.0 = no zoom, >1 = zoom in)
 
-    # Slider for scrolling slices
-    slider = QSlider(instance.t1_frame)
-    slider.setOrientation(Qt.Horizontal)
-    slider.setMinimum(0)
-    slider.setMaximum(num_slices - 1)
-    slider.setValue(num_slices // 2)
-    layout.addWidget(slider)
+    # Custom interactor style to suppress zooming on scroll
+    class CustomInteractorStyle(vtk.vtkInteractorStyleImage):
+        def __init__(self, viewer):
+            super().__init__()
+            self.viewer = viewer
+            self.num_slices = viewer.GetInput().GetDimensions()[2]
+            self.AddObserver("MouseWheelForwardEvent", self.on_scroll_event)
+            self.AddObserver("MouseWheelBackwardEvent", self.on_scroll_event)
+        
+        def on_scroll_event(self, obj, event):
+            current_slice = self.viewer.GetSlice()
+            delta = 1 if event == "MouseWheelForwardEvent" else -1
+            new_slice = max(0, min(self.num_slices - 1, current_slice + delta))
+            self.viewer.SetSlice(new_slice)
+            self.viewer.Render()
 
-    # Slider value changed event
-    def on_slider_value_changed(value):
-        viewer.SetSlice(value)
-        viewer.Render()
-
-    slider.valueChanged.connect(on_slider_value_changed)
-
-    # Custom scroll event handler
-    def on_scroll_event(caller, event):
-        nonlocal viewer
-        current_slice = viewer.GetSlice()
-        delta = 1 if event == "MouseWheelForwardEvent" else -1
-        new_slice = max(0, min(num_slices - 1, current_slice + delta))
-        viewer.SetSlice(new_slice)
-        slider.setValue(new_slice)
-        viewer.Render()
-
-    # Add scroll observer
-    iren.AddObserver("MouseWheelForwardEvent", on_scroll_event)
-    iren.AddObserver("MouseWheelBackwardEvent", on_scroll_event)
+    # Create and set the custom interactor style
+    style = CustomInteractorStyle(viewer)
+    iren.SetInteractorStyle(style)
 
     # Initialize interactor
     iren.Initialize()
