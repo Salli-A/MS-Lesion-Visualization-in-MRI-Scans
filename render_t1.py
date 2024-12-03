@@ -6,7 +6,7 @@ import pyvista as pv
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
-    QApplication, QCheckBox, QLineEdit, QSlider)
+    QApplication, QCheckBox, QLineEdit, QSlider, QLabel)
 from PyQt5.QtCore import Qt
 
 
@@ -137,5 +137,87 @@ def t1_renderPlane(instance, filename):
     # Initialize interactor
     iren.Initialize()
     viewer.Render()
+
+    return ren_window
+
+
+def t1_renderPlaneVolume(instance, filename, slice_center = 50, slice_thickness=12):
+    """
+    Renders a 12-voxel-thick axial volume slice from an MRI scan with predefined color and opacity transfer functions.
+
+    Parameters:
+    - instance: The parent object containing frame and layout for VTK rendering.
+    - filename: Path to the MRI NIFTI file.
+    - slice_center: The center of the slice along the Z-axis (axial axis).
+    - slice_thickness: Thickness of the slice in voxels (default is 12).
+
+    Returns:
+    - ren_window: The VTK render window object.
+    """
+    frame = instance.t1_frame
+    layout = instance.t1_layout
+
+    widget = QVTKRenderWindowInteractor(frame)
+    layout.addWidget(widget)
+
+    ren_window = widget.GetRenderWindow()
+    iren = ren_window.GetInteractor()
+
+    # Read the NIFTI image
+    reader = vtk.vtkNIFTIImageReader()
+    reader.SetFileName(filename)
+    reader.Update()
+
+    # Calculate slice bounds based on center and thickness
+    slice_min = slice_center - slice_thickness / 2
+    slice_max = slice_center + slice_thickness / 2
+
+    # Set up the mapper
+    mapper = vtk.vtkGPUVolumeRayCastMapper()
+    mapper.SetInputConnection(reader.GetOutputPort())
+
+    # Restrict the mapper to the slice bounds
+    mapper.CroppingOn()
+    mapper.SetCroppingRegionPlanes(
+        float("-inf"), float("inf"),  # X-axis (full range)
+        float("-inf"), float("inf"),  # Y-axis (full range)
+        slice_min, slice_max          # Z-axis (slice range)
+    )
+    mapper.SetCroppingRegionFlags(vtk.VTK_CROP_SUBVOLUME)
+
+    # Set up the color transfer function
+    color_transfer = vtk.vtkColorTransferFunction()
+    color_transfer.SetColorSpaceToRGB()
+    color_transfer.AddRGBPoint(0, 0, 0, 0)
+    color_transfer.AddRGBPoint(512, 1, 1, 1)
+
+    # Set up the opacity transfer function
+    scalar_transfer = vtk.vtkPiecewiseFunction()
+    scalar_transfer.AddPoint(0, 0)
+    scalar_transfer.AddPoint(256, 0.035)
+
+    # Create the volume property
+    volume_property = vtk.vtkVolumeProperty()
+    volume_property.SetColor(color_transfer)
+    volume_property.SetScalarOpacity(scalar_transfer)
+    volume_property.ShadeOn()
+
+    # Create the volume actor
+    volume = vtk.vtkVolume()
+    volume.SetMapper(mapper)
+    volume.SetProperty(volume_property)
+
+    # Set up the renderer and camera
+    renderer = vtk.vtkRenderer()
+    ren_window.AddRenderer(renderer)
+
+    renderer.SetBackground(0.0, 0.0, 0.0)
+    renderer.SetActiveCamera(instance.camera)
+
+    # Add the volume actor to the renderer
+    renderer.AddVolume(volume)
+
+    iren.Initialize()
+    iren.Start()
 
     return ren_window

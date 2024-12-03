@@ -3,7 +3,7 @@ import vtk
 import sys
 import pyvista as pv
 
-from render_t1 import t1_renderWindow, t1_renderPlane
+from render_t1 import t1_renderWindow, t1_renderPlane, t1_renderPlaneVolume
 from render_flair import flair_renderWindow, flair_renderPlane
 from render_swi import swi_renderWindow, swi_renderPlane
 from render_phase import phase_renderWindow, phase_renderPlane
@@ -51,23 +51,33 @@ class Ui(QtWidgets.QMainWindow):
           
      
      def render_modalities(self,filename):
-          # Indivual rendering code for modalities
-          # (Can be combined into one function if it takes into account the transfer function and stuff)
-          """"
+
           
           # One camera for all modalities - only for renderWindow, not implemented for renderPlane
           self.setup_camera()
-          
+
+          # Indivual rendering code for modalities
+          # (Can be combined into one function if it takes into account the transfer function and stuff)
+          """"
+          # Entire volume
           self.t1_window = t1_renderWindow(self,filename[0])
           self.flair_window = flair_renderWindow(self,filename[1])
           self.swi_window = swi_renderWindow(self,filename[2])
           self.phase_window = phase_renderWindow(self,filename[3])
           """
-          
+          """"
+          # 2d slices
           self.t1_window = t1_renderPlane(self,filename[0])
           self.flair_window = flair_renderPlane(self,filename[1])
           self.swi_window = swi_renderPlane(self,filename[2])
           self.phase_window = phase_renderPlane(self,filename[3])
+          """          
+          # Testing with volume slices
+          self.t1_window = t1_renderPlaneVolume(self,filename[0])
+          self.flair_window = flair_renderPlane(self,filename[1])
+          self.swi_window = swi_renderPlane(self,filename[2])
+          self.phase_window = phase_renderPlane(self,filename[3])
+
           
      
      def render_all(self):
