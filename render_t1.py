@@ -17,8 +17,11 @@ from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage
 
 def t1_renderWindow(instance, filename):
 
-    widget = QVTKRenderWindowInteractor(instance.t1_frame)
-    instance.t1_layout.addWidget(widget)
+    frame = instance.t1_frame
+    layout = instance.t1_layout
+
+    widget = QVTKRenderWindowInteractor(frame)
+    layout.addWidget(widget)
 
     ren_window =  widget.GetRenderWindow()
     iren = ren_window.GetInteractor()
@@ -70,8 +73,12 @@ def t1_renderWindow(instance, filename):
 
 
 def t1_renderPlane(instance, filename):
-    widget = QVTKRenderWindowInteractor(instance.t1_frame)
-    instance.t1_layout.addWidget(widget)
+
+    frame = instance.t1_frame
+    layout = instance.t1_layout
+    
+    widget = QVTKRenderWindowInteractor(frame)
+    layout.addWidget(widget)
 
     ren_window = widget.GetRenderWindow()
     iren = ren_window.GetInteractor()
@@ -102,7 +109,7 @@ def t1_renderPlane(instance, filename):
     slider.setMinimum(0)
     slider.setMaximum(num_slices - 1)
     slider.setValue(num_slices // 2)
-    instance.t1_layout.addWidget(slider)
+    layout.addWidget(slider)
 
     # Slider value changed event
     def on_slider_value_changed(value):
@@ -110,6 +117,20 @@ def t1_renderPlane(instance, filename):
         viewer.Render()
 
     slider.valueChanged.connect(on_slider_value_changed)
+
+    # Custom scroll event handler
+    def on_scroll_event(caller, event):
+        nonlocal viewer
+        current_slice = viewer.GetSlice()
+        delta = 1 if event == "MouseWheelForwardEvent" else -1
+        new_slice = max(0, min(num_slices - 1, current_slice + delta))
+        viewer.SetSlice(new_slice)
+        slider.setValue(new_slice)
+        viewer.Render()
+
+    # Add scroll observer
+    iren.AddObserver("MouseWheelForwardEvent", on_scroll_event)
+    iren.AddObserver("MouseWheelBackwardEvent", on_scroll_event)
 
     # Initialize interactor
     iren.Initialize()

@@ -4,9 +4,9 @@ import sys
 import pyvista as pv
 
 from render_t1 import t1_renderWindow, t1_renderPlane
-from render_flair import flair_renderWindow
-from render_swi import swi_renderWindow
-from render_phase import phase_renderWindow
+from render_flair import flair_renderWindow, flair_renderPlane
+from render_swi import swi_renderWindow, swi_renderPlane
+from render_phase import phase_renderWindow, phase_renderPlane
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
@@ -56,12 +56,17 @@ class Ui(QtWidgets.QMainWindow):
      def render_modalities(self,filename):
           # Indivual rendering code for modalities
           # (Can be combined into one function if it takes into account the transfer function and stuff)
-          #self.t1_window = t1_renderWindow(self,filename[0])
-          self.t1_window = t1_renderPlane(self,filename[0])
-
+          """"
+          self.t1_window = t1_renderWindow(self,filename[0])
           self.flair_window = flair_renderWindow(self,filename[1])
           self.swi_window = swi_renderWindow(self,filename[2])
           self.phase_window = phase_renderWindow(self,filename[3])
+          """
+          
+          self.t1_window = t1_renderPlane(self,filename[0])
+          self.flair_window = flair_renderPlane(self,filename[1])
+          self.swi_window = swi_renderPlane(self,filename[2])
+          self.phase_window = phase_renderPlane(self,filename[3])
           
      
      def render_all(self):
