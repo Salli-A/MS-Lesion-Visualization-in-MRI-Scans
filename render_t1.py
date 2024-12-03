@@ -71,15 +71,11 @@ def t1_renderWindow(instance, filename):
 
     return ren_window
 
-
-
-
-
 def t1_renderPlane(instance, filename):
-    
+
     frame = instance.t1_frame
     layout = instance.t1_layout
-    
+
     widget = QVTKRenderWindowInteractor(frame)
     layout.addWidget(widget)
 
@@ -106,7 +102,7 @@ def t1_renderPlane(instance, filename):
     viewer = vtk.vtkImageViewer2()
     viewer.SetInputConnection(flip_z.GetOutputPort())
     viewer.SetRenderWindow(ren_window)
-    viewer.SetSliceOrientationToXY()  # Axial view
+    viewer.SetSliceOrientationToXY()  # Saggital view
     viewer.GetRenderer().SetBackground(0, 0, 0)
     
     # Set initial slice

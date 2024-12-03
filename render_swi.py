@@ -27,7 +27,8 @@ def swi_renderWindow(instance, filename):
 
     reader = vtk.vtkNIFTIImageReader()
     reader.SetFileName(filename)
-
+    reader.Update()
+    
     # Set up the mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()
     mapper.SetInputConnection(reader.GetOutputPort())
@@ -54,7 +55,6 @@ def swi_renderWindow(instance, filename):
     volume.SetProperty(volume_property)
 
     # Compute the center of the volume
-    reader.Update()
     bounds = reader.GetOutput().GetBounds()
     center_x = (bounds[0] + bounds[1]) / 2.0
     center_y = (bounds[2] + bounds[3]) / 2.0
@@ -100,26 +100,15 @@ def swi_renderPlane(instance, filename):
     reader.SetFileName(filename)
     reader.Update()
 
-    # Flip the image along the desired axis
-    flip_y = vtk.vtkImageFlip()
-    flip_y.SetInputConnection(reader.GetOutputPort())
-    flip_y.SetFilteredAxis(1)  # Flip along the Y-axis
-    flip_y.Update()
-
-    flip_z = vtk.vtkImageFlip()
-    flip_z.SetInputConnection(flip_y.GetOutputPort())
-    flip_z.SetFilteredAxis(2)  # Flip along the Z-axis
-    flip_z.Update()
-
     # Image viewer for slice rendering
     viewer = vtk.vtkImageViewer2()
-    viewer.SetInputConnection(flip_z.GetOutputPort())
+    viewer.SetInputConnection(reader.GetOutputPort())
     viewer.SetRenderWindow(ren_window)
-    viewer.SetSliceOrientationToXY()  # Axial view
+    viewer.SetSliceOrientationToYZ()  # Saggital view
     viewer.GetRenderer().SetBackground(0, 0, 0)
     
     # Set initial slice
-    num_slices = flip_z.GetOutput().GetDimensions()[2]
+    num_slices = reader.GetOutput().GetDimensions()[2]
     viewer.SetSlice(num_slices // 2)
 
     # Zoom in by adjusting the camera

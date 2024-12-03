@@ -105,7 +105,7 @@ def flair_renderPlane(instance, filename):
     viewer = vtk.vtkImageViewer2()
     viewer.SetInputConnection(flip_z.GetOutputPort())
     viewer.SetRenderWindow(ren_window)
-    viewer.SetSliceOrientationToXY()  # Axial view
+    viewer.SetSliceOrientationToXY()  # Saggital view
     viewer.GetRenderer().SetBackground(0, 0, 0)
     
     # Set initial slice

@@ -37,7 +37,7 @@ class Ui(QtWidgets.QMainWindow):
           # Setup the buttons, text field etc.
           self.layout_setup()
           
-          # One camera for all modalities
+          # One camera for all modalities - only for renderWindow, not implemented for renderPlane
           self.setup_camera()
           
           self.show()
