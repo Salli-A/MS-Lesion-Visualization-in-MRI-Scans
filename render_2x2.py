@@ -36,12 +36,6 @@ class Ui(QtWidgets.QMainWindow):
           
           # Setup the buttons, text field etc.
           self.layout_setup()
-         
-
-          # Issue: Same camera position, focal point, etc. Different camera positions/rotations for each modalitity.
-          # Possible reason: Different data, voxel size, intital orientation?
-          # Solution rotate the SWI and phase modalities 
-          # -want to use same camera for sync (at last for qtWindow, maybe doens't matter for planar views)
           
           # One camera for all modalities
           self.setup_camera()
@@ -70,8 +64,8 @@ class Ui(QtWidgets.QMainWindow):
      
      def render_modalities(self,filename):
           # Indivual rendering code for modalities (because of different transfer functions - can be combined into one function if it takes into account the transfer function and stuff)
-          self.t1_window, self.t1_iren = t1_renderWindow(self,filename[0])
-          #self.t1_window, self.t1_iren = t1_renderPlane(self,filename[0])
+          #self.t1_window, self.t1_iren = t1_renderWindow(self,filename[0])
+          self.t1_window, self.t1_iren = t1_renderPlane(self,filename[0])
           self.flair_window, self.flair_iren = flair_renderWindow(self,filename[1])
           self.swi_window, self.swi_iren = swi_renderWindow(self,filename[2])
           self.phase_window, self.phase_iren = phase_renderWindow(self,filename[3])
