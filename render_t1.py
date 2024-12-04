@@ -141,16 +141,13 @@ def t1_renderPlane(instance, filename):
     return ren_window
 
 
-import vtkmodules.all as vtk
 
+from slice_interactor import slice_interactor
 def t1_renderPlaneVolume(instance, filename, slice_thickness=12):
 
-    frame = instance.t1_frame
-    layout = instance.t1_layout
-
-    widget = QVTKRenderWindowInteractor(frame)
-    layout.addWidget(widget)
-
+    # Set up the VTK rendering context
+    widget = QVTKRenderWindowInteractor(instance.t1_frame)
+    instance.t1_layout.addWidget(widget)
     ren_window = widget.GetRenderWindow()
     iren = ren_window.GetInteractor()
 
@@ -159,128 +156,65 @@ def t1_renderPlaneVolume(instance, filename, slice_thickness=12):
     reader.SetFileName(filename)
     reader.Update()
 
-    # Get the dimensions of the volume to calculate the center
+    # Compute volume center and slice bounds
     extent = reader.GetOutput().GetExtent()
-    z_min, z_max = extent[4], extent[5]
-    z_center = (z_min + z_max) / 2  # Center along the Z-axis
+    x_min, x_max, y_min, y_max, z_min, z_max = extent[0], extent[1], extent[2], extent[3], extent[4], extent[5]
+    x_center, y_center, z_center = (x_min + x_max) / 2, (y_min + y_max) / 2, (z_min + z_max) / 2
+    slice_min, slice_max = z_center - slice_thickness / 2, z_center + slice_thickness / 2
 
-    y_min, y_max = extent[2], extent[3]
-    y_center = (y_min + y_max) / 2
-
-    x_min, x_max = extent[0], extent[1]
-    x_center = (x_min + x_max) / 2
-
-    # Initial slice bounds
-    slice_min = z_center - slice_thickness / 2
-    slice_max = z_center + slice_thickness / 2
-
-    # Update camera parameters
+    # Set camera parameters
     distance = max(x_max - x_min, y_max - y_min, z_max - z_min) * 1.5
+    instance.set_view(focalPoint=(x_center, y_center, z_center), position=(x_center, y_center, z_center + distance))
 
-    focalPoint = (x_center, y_center, z_center)
-    position = (x_center, y_center, z_center + distance)
-
-    instance.set_view(focalPoint=focalPoint, position=position)
-
-    # Set up the mapper
+    # Configure the volume mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()
     mapper.SetInputConnection(reader.GetOutputPort())
 
-    # Restrict the mapper to the initial slice bounds
     mapper.CroppingOn()
     mapper.SetCroppingRegionPlanes(
-        float("-inf"), float("inf"),  # X-axis (full range)
-        float("-inf"), float("inf"),  # Y-axis (full range)
-        slice_min, slice_max          # Z-axis (slice range)
+        float("-inf"), float("inf"),  # Full range in X
+        float("-inf"), float("inf"),  # Full range in Y
+        slice_min, slice_max          # Slicing range in Z
     )
     mapper.SetCroppingRegionFlags(vtk.VTK_CROP_SUBVOLUME)
 
-    # Set up the color transfer function
+    # Define color and opacity transfer functions
     color_transfer = vtk.vtkColorTransferFunction()
     color_transfer.SetColorSpaceToRGB()
     color_transfer.AddRGBPoint(0, 0, 0, 0)
     color_transfer.AddRGBPoint(512, 1, 1, 1)
 
-    # Set up the opacity transfer function
     scalar_transfer = vtk.vtkPiecewiseFunction()
     scalar_transfer.AddPoint(0, 0)
     scalar_transfer.AddPoint(256, 0.15)
 
-    # Create the volume property
+    # Create the volume property and actor
     volume_property = vtk.vtkVolumeProperty()
     volume_property.SetColor(color_transfer)
     volume_property.SetScalarOpacity(scalar_transfer)
     volume_property.ShadeOn()
 
-    # Create the volume actor
     volume = vtk.vtkVolume()
     volume.SetMapper(mapper)
     volume.SetProperty(volume_property)
 
-    # Set up the renderer and camera
+    # Configure the renderer
     renderer = vtk.vtkRenderer()
-    ren_window.AddRenderer(renderer)
-
     renderer.SetBackground(0.0, 0.0, 0.0)
     renderer.SetActiveCamera(instance.camera)
-
-    # Add the volume actor to the renderer
     renderer.AddVolume(volume)
+    ren_window.AddRenderer(renderer)
 
-    
-    class CustomInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
-        def __init__(self, parent=None):
-            super().__init__(parent)
-            self.AddObserver("MouseWheelForwardEvent", self.on_scroll_forward)
-            self.AddObserver("MouseWheelBackwardEvent", self.on_scroll_backward)
-            self.mapper = mapper
-            self.slice_min = slice_min
-            self.slice_max = slice_max
-            self.step = slice_thickness / 2
-            self.zoom_factor = 1.1  # Adjust as needed for zoom speed
-            self.renderer = renderer
-
-        def is_shift_pressed(self):
-            """Check if Shift is pressed."""
-            return self.GetInteractor().GetShiftKey()
-
-        def on_scroll_forward(self, obj, event):
-            if self.is_shift_pressed():
-                # Zoom in
-                camera = self.renderer.GetActiveCamera()
-                camera.Zoom(self.zoom_factor)
-            else:
-                # Move slice forward
-                self.slice_min = min(self.slice_min + self.step, z_max - slice_thickness)
-                self.slice_max = self.slice_min + slice_thickness
-                self.mapper.SetCroppingRegionPlanes(
-                    float("-inf"), float("inf"),  # X-axis (full range)
-                    float("-inf"), float("inf"),  # Y-axis (full range)
-                    self.slice_min, self.slice_max
-                )
-            ren_window.Render()
-
-        def on_scroll_backward(self, obj, event):
-            if self.is_shift_pressed():
-                # Zoom out
-                camera = self.renderer.GetActiveCamera()
-                camera.Zoom(1 / self.zoom_factor)
-            else:
-                # Move slice backward
-                self.slice_min = max(self.slice_min - self.step, z_min)
-                self.slice_max = self.slice_min + slice_thickness
-                self.mapper.SetCroppingRegionPlanes(
-                    float("-inf"), float("inf"),  # X-axis (full range)
-                    float("-inf"), float("inf"),  # Y-axis (full range)
-                    self.slice_min, self.slice_max
-                )
-            ren_window.Render()
-
-    # Set the custom interactor style
-    interactor_style = CustomInteractorStyle()
-    interactor_style.mapper = mapper
-    interactor_style.renderer = renderer
-
+    # Set up the interactive slice interactor
+    interactor_style = slice_interactor(
+        mapper=mapper,
+        renderer=renderer,
+        slice_min=slice_min,
+        slice_max=slice_max,
+        slice_thickness=slice_thickness,
+        z_min=z_min,
+        z_max=z_max
+    )
     iren.SetInteractorStyle(interactor_style)
     iren.Initialize()
     iren.Start()
