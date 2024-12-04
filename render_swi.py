@@ -141,6 +141,9 @@ def swi_renderPlane(instance, filename):
 
     return ren_window
 
+
+
+
 from slice_interactor import SliceInteractor
 
 def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=True, slice_direction='z'):
@@ -247,39 +250,14 @@ def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tr
 
 
 
-    # Custom interactor style to disable zoom
-    class CustomInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
-        def __init__(self, parent=None):
-            self.AddObserver("MouseWheelForwardEvent", self.scroll_forward)
-            self.AddObserver("MouseWheelBackwardEvent", self.scroll_backward)
-            self.mapper = mapper
-            self.slice_min = slice_min
-            self.slice_max = slice_max
-            self.step = slice_thickness / 2
-
-        def scroll_forward(self, obj, event):
-            self.slice_min = min(self.slice_min + self.step, x_max - slice_thickness)
-            self.slice_max = self.slice_min + slice_thickness
-            self.mapper.SetCroppingRegionPlanes(
-                self.slice_min, self.slice_max,  # X-axis (slice range)
-                float("-inf"), float("inf"),    # Y-axis (full range)
-                float("-inf"), float("inf")     # Z-axis (full range)
-            )
-            ren_window.Render()
-
-        def scroll_backward(self, obj, event):
-            self.slice_min = max(self.slice_min - self.step, x_min)
-            self.slice_max = self.slice_min + slice_thickness
-            self.mapper.SetCroppingRegionPlanes(
-                self.slice_min, self.slice_max,  # X-axis (slice range)
-                float("-inf"), float("inf"),    # Y-axis (full range)
-                float("-inf"), float("inf")     # Z-axis (full range)
-            )
-            ren_window.Render()
-
-    # Set the custom interactor style
-    interactor_style = CustomInteractorStyle()
-    interactor_style.mapper = mapper
+    # Set up the interactive slice interactor
+    interactor_style = SliceInteractor(
+        mapper=mapper,
+        renderer=renderer,
+        extent=extent,
+        slice_thickness=slice_thickness,
+        slice_direction=slice_direction
+    )
     iren.SetInteractorStyle(interactor_style)
 
     iren.Initialize()

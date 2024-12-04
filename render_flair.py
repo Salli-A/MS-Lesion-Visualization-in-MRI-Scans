@@ -166,9 +166,7 @@ def flair_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=
 
     # Compute volume center and slice bounds
     extent = reader.GetOutput().GetExtent()
-    x_min, x_max, y_min, y_max, z_min, z_max = extent
-    x_center, y_center, z_center = (x_min + x_max) / 2, (y_min + y_max) / 2, (z_min + z_max) / 2
-
+    
     # Configure the volume mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()
     mapper.SetInputConnection(reader.GetOutputPort())
