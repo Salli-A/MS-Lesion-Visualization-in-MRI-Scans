@@ -144,12 +144,15 @@ def flair_renderPlane(instance, filename):
     return ren_window
 
 
+from slice_interactor import SliceInteractor
 
-def flair_renderPlaneVolume(instance, filename, slice_thickness=12):
-    
+
+def flair_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=True, slice_direction='z'):
+
     frame = instance.flair_frame
     layout = instance.flair_layout
 
+    # Set up the VTK rendering context
     widget = QVTKRenderWindowInteractor(frame)
     layout.addWidget(widget)
 
@@ -161,99 +164,69 @@ def flair_renderPlaneVolume(instance, filename, slice_thickness=12):
     reader.SetFileName(filename)
     reader.Update()
 
-    # Get the dimensions of the volume to calculate the center
+    # Compute volume center and slice bounds
     extent = reader.GetOutput().GetExtent()
-    z_min, z_max = extent[4], extent[5]
-    z_center = (z_min + z_max) / 2  # Center along the Z-axis
+    x_min, x_max, y_min, y_max, z_min, z_max = extent
+    x_center, y_center, z_center = (x_min + x_max) / 2, (y_min + y_max) / 2, (z_min + z_max) / 2
 
-    y_min, y_max = extent[2], extent[3]
-    y_center = (y_min + y_max) / 2
-
-    x_min, x_max = extent[0], extent[1]
-    x_center = (x_min + x_max) / 2
-
-    # Initial slice bounds
-    slice_min = z_center - slice_thickness / 2
-    slice_max = z_center + slice_thickness / 2
-
-    # Set up the mapper
+    # Configure the volume mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()
     mapper.SetInputConnection(reader.GetOutputPort())
 
-    # Restrict the mapper to the initial slice bounds
     mapper.CroppingOn()
-    mapper.SetCroppingRegionPlanes(
-        float("-inf"), float("inf"),  # X-axis (full range)
-        float("-inf"), float("inf"),  # Y-axis (full range)
-        slice_min, slice_max          # Z-axis (slice range)
-    )
     mapper.SetCroppingRegionFlags(vtk.VTK_CROP_SUBVOLUME)
 
-    # Set up the color transfer function
+    # Define color and opacity transfer functions
     color_transfer = vtk.vtkColorTransferFunction()
     color_transfer.SetColorSpaceToRGB()
     color_transfer.AddRGBPoint(0, 0, 0, 0)
     color_transfer.AddRGBPoint(512, 1, 1, 1)
 
-    # Set up the opacity transfer function
     scalar_transfer = vtk.vtkPiecewiseFunction()
     scalar_transfer.AddPoint(0, 0)
-    scalar_transfer.AddPoint(256, 0.3)
+    scalar_transfer.AddPoint(256, 0.15)
 
-    # Create the volume property
+    # Create the volume property and actor
     volume_property = vtk.vtkVolumeProperty()
     volume_property.SetColor(color_transfer)
     volume_property.SetScalarOpacity(scalar_transfer)
     volume_property.ShadeOn()
 
-    # Create the volume actor
     volume = vtk.vtkVolume()
     volume.SetMapper(mapper)
     volume.SetProperty(volume_property)
 
-    # Set up the renderer and camera
+    # Configure the renderer
     renderer = vtk.vtkRenderer()
-    ren_window.AddRenderer(renderer)
-
     renderer.SetBackground(0.0, 0.0, 0.0)
     renderer.SetActiveCamera(instance.camera)
-
-    # Add the volume actor to the renderer
     renderer.AddVolume(volume)
 
-    # Custom interactor style to disable zoom
-    class CustomInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
-        def __init__(self, parent=None):
-            self.AddObserver("MouseWheelForwardEvent", self.scroll_forward)
-            self.AddObserver("MouseWheelBackwardEvent", self.scroll_backward)
-            self.mapper = mapper
-            self.slice_min = slice_min
-            self.slice_max = slice_max
-            self.step = slice_thickness / 2
+    # Add bounds display if show_bounds is True
+    if show_bounds:
+        outline_filter = vtk.vtkOutlineFilter()
+        outline_filter.SetInputConnection(reader.GetOutputPort())
+        outline_filter.Update()
 
-        def scroll_forward(self, obj, event):
-            self.slice_min = min(self.slice_min + self.step, z_max - slice_thickness)
-            self.slice_max = self.slice_min + slice_thickness
-            self.mapper.SetCroppingRegionPlanes(
-                float("-inf"), float("inf"),  # X-axis (full range)
-                float("-inf"), float("inf"),  # Y-axis (full range)
-                self.slice_min, self.slice_max
-            )
-            ren_window.Render()
+        outline_mapper = vtk.vtkPolyDataMapper()
+        outline_mapper.SetInputConnection(outline_filter.GetOutputPort())
 
-        def scroll_backward(self, obj, event):
-            self.slice_min = max(self.slice_min - self.step, z_min)
-            self.slice_max = self.slice_min + slice_thickness
-            self.mapper.SetCroppingRegionPlanes(
-                float("-inf"), float("inf"),  # X-axis (full range)
-                float("-inf"), float("inf"),  # Y-axis (full range)
-                self.slice_min, self.slice_max
-            )
-            ren_window.Render()
+        outline_actor = vtk.vtkActor()
+        outline_actor.SetMapper(outline_mapper)
+        outline_actor.GetProperty().SetColor(1.0, 1.0, 1.0)  # White color for bounds
 
-    # Set the custom interactor style
-    interactor_style = CustomInteractorStyle()
-    interactor_style.mapper = mapper
+        renderer.AddActor(outline_actor)
+
+    ren_window.AddRenderer(renderer)
+
+    # Set up the interactive slice interactor
+    interactor_style = SliceInteractor(
+        mapper=mapper,
+        renderer=renderer,
+        extent=extent,
+        slice_thickness=slice_thickness,
+        slice_direction=slice_direction
+    )
     iren.SetInteractorStyle(interactor_style)
 
     iren.Initialize()

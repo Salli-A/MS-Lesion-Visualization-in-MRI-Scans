@@ -142,12 +142,26 @@ def t1_renderPlane(instance, filename):
 
 
 
-from slice_interactor import slice_interactor
-def t1_renderPlaneVolume(instance, filename, slice_thickness=12):
+from slice_interactor import SliceInteractor
+
+def t1_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=True, slice_direction='z'):
+    """
+    Render a volume using the SliceInteractor to allow interactive slicing.
+
+    :param instance: The main instance containing the layout and frame.
+    :param filename: The file path of the NIFTI image to render.
+    :param slice_thickness: The thickness of each slice.
+    :param show_bounds: Whether to display the bounds of the volume.
+    :param slice_direction: The slicing direction ('x', 'y', or 'z').
+    :return: The render window.
+    """
+    frame = instance.t1_frame
+    layout = instance.t1_layout
 
     # Set up the VTK rendering context
-    widget = QVTKRenderWindowInteractor(instance.t1_frame)
-    instance.t1_layout.addWidget(widget)
+    widget = QVTKRenderWindowInteractor(frame)
+    layout.addWidget(widget)
+
     ren_window = widget.GetRenderWindow()
     iren = ren_window.GetInteractor()
 
@@ -158,9 +172,8 @@ def t1_renderPlaneVolume(instance, filename, slice_thickness=12):
 
     # Compute volume center and slice bounds
     extent = reader.GetOutput().GetExtent()
-    x_min, x_max, y_min, y_max, z_min, z_max = extent[0], extent[1], extent[2], extent[3], extent[4], extent[5]
+    x_min, x_max, y_min, y_max, z_min, z_max = extent
     x_center, y_center, z_center = (x_min + x_max) / 2, (y_min + y_max) / 2, (z_min + z_max) / 2
-    slice_min, slice_max = z_center - slice_thickness / 2, z_center + slice_thickness / 2
 
     # Set camera parameters
     distance = max(x_max - x_min, y_max - y_min, z_max - z_min) * 1.5
@@ -171,11 +184,6 @@ def t1_renderPlaneVolume(instance, filename, slice_thickness=12):
     mapper.SetInputConnection(reader.GetOutputPort())
 
     mapper.CroppingOn()
-    mapper.SetCroppingRegionPlanes(
-        float("-inf"), float("inf"),  # Full range in X
-        float("-inf"), float("inf"),  # Full range in Y
-        slice_min, slice_max          # Slicing range in Z
-    )
     mapper.SetCroppingRegionFlags(vtk.VTK_CROP_SUBVOLUME)
 
     # Define color and opacity transfer functions
@@ -203,19 +211,34 @@ def t1_renderPlaneVolume(instance, filename, slice_thickness=12):
     renderer.SetBackground(0.0, 0.0, 0.0)
     renderer.SetActiveCamera(instance.camera)
     renderer.AddVolume(volume)
+
+    # Add bounds display if show_bounds is True
+    if show_bounds:
+        outline_filter = vtk.vtkOutlineFilter()
+        outline_filter.SetInputConnection(reader.GetOutputPort())
+        outline_filter.Update()
+
+        outline_mapper = vtk.vtkPolyDataMapper()
+        outline_mapper.SetInputConnection(outline_filter.GetOutputPort())
+
+        outline_actor = vtk.vtkActor()
+        outline_actor.SetMapper(outline_mapper)
+        outline_actor.GetProperty().SetColor(1.0, 1.0, 1.0)  # White color for bounds
+
+        renderer.AddActor(outline_actor)
+
     ren_window.AddRenderer(renderer)
 
     # Set up the interactive slice interactor
-    interactor_style = slice_interactor(
+    interactor_style = SliceInteractor(
         mapper=mapper,
         renderer=renderer,
-        slice_min=slice_min,
-        slice_max=slice_max,
+        extent=extent,
         slice_thickness=slice_thickness,
-        z_min=z_min,
-        z_max=z_max
+        slice_direction=slice_direction
     )
     iren.SetInteractorStyle(interactor_style)
+
     iren.Initialize()
     iren.Start()
 

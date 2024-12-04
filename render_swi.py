@@ -141,8 +141,9 @@ def swi_renderPlane(instance, filename):
 
     return ren_window
 
+from slice_interactor import SliceInteractor
 
-def swi_renderPlaneVolume(instance, filename, slice_thickness=12):
+def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=True, slice_direction='z'):
     
     frame = instance.swi_frame
     layout = instance.swi_layout
@@ -227,6 +228,24 @@ def swi_renderPlaneVolume(instance, filename, slice_thickness=12):
 
     # Add the volume actor to the renderer
     renderer.AddVolume(volume)
+
+    
+    # Add bounds display if show_bounds is True
+    if show_bounds:
+        outline_filter = vtk.vtkOutlineFilter()
+        outline_filter.SetInputConnection(reader.GetOutputPort())
+        outline_filter.Update()
+
+        outline_mapper = vtk.vtkPolyDataMapper()
+        outline_mapper.SetInputConnection(outline_filter.GetOutputPort())
+
+        outline_actor = vtk.vtkActor()
+        outline_actor.SetMapper(outline_mapper)
+        outline_actor.GetProperty().SetColor(1.0, 1.0, 1.0)  # White color for bounds
+
+        renderer.AddActor(outline_actor)
+
+
 
     # Custom interactor style to disable zoom
     class CustomInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
