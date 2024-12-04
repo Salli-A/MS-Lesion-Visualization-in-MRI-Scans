@@ -227,41 +227,61 @@ def t1_renderPlaneVolume(instance, filename, slice_thickness=12):
     # Add the volume actor to the renderer
     renderer.AddVolume(volume)
 
-    # Custom interactor style to disable zoom
+    
     class CustomInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         def __init__(self, parent=None):
-            self.AddObserver("MouseWheelForwardEvent", self.scroll_forward)
-            self.AddObserver("MouseWheelBackwardEvent", self.scroll_backward)
+            super().__init__(parent)
+            self.AddObserver("MouseWheelForwardEvent", self.on_scroll_forward)
+            self.AddObserver("MouseWheelBackwardEvent", self.on_scroll_backward)
             self.mapper = mapper
             self.slice_min = slice_min
             self.slice_max = slice_max
             self.step = slice_thickness / 2
+            self.zoom_factor = 1.1  # Adjust as needed for zoom speed
+            self.renderer = renderer
 
-        def scroll_forward(self, obj, event):
-            self.slice_min = min(self.slice_min + self.step, z_max - slice_thickness)
-            self.slice_max = self.slice_min + slice_thickness
-            self.mapper.SetCroppingRegionPlanes(
-                float("-inf"), float("inf"),  # X-axis (full range)
-                float("-inf"), float("inf"),  # Y-axis (full range)
-                self.slice_min, self.slice_max
-            )
+        def is_shift_pressed(self):
+            """Check if Shift is pressed."""
+            return self.GetInteractor().GetShiftKey()
+
+        def on_scroll_forward(self, obj, event):
+            if self.is_shift_pressed():
+                # Zoom in
+                camera = self.renderer.GetActiveCamera()
+                camera.Zoom(self.zoom_factor)
+            else:
+                # Move slice forward
+                self.slice_min = min(self.slice_min + self.step, z_max - slice_thickness)
+                self.slice_max = self.slice_min + slice_thickness
+                self.mapper.SetCroppingRegionPlanes(
+                    float("-inf"), float("inf"),  # X-axis (full range)
+                    float("-inf"), float("inf"),  # Y-axis (full range)
+                    self.slice_min, self.slice_max
+                )
             ren_window.Render()
 
-        def scroll_backward(self, obj, event):
-            self.slice_min = max(self.slice_min - self.step, z_min)
-            self.slice_max = self.slice_min + slice_thickness
-            self.mapper.SetCroppingRegionPlanes(
-                float("-inf"), float("inf"),  # X-axis (full range)
-                float("-inf"), float("inf"),  # Y-axis (full range)
-                self.slice_min, self.slice_max
-            )
+        def on_scroll_backward(self, obj, event):
+            if self.is_shift_pressed():
+                # Zoom out
+                camera = self.renderer.GetActiveCamera()
+                camera.Zoom(1 / self.zoom_factor)
+            else:
+                # Move slice backward
+                self.slice_min = max(self.slice_min - self.step, z_min)
+                self.slice_max = self.slice_min + slice_thickness
+                self.mapper.SetCroppingRegionPlanes(
+                    float("-inf"), float("inf"),  # X-axis (full range)
+                    float("-inf"), float("inf"),  # Y-axis (full range)
+                    self.slice_min, self.slice_max
+                )
             ren_window.Render()
 
     # Set the custom interactor style
     interactor_style = CustomInteractorStyle()
     interactor_style.mapper = mapper
-    iren.SetInteractorStyle(interactor_style)
+    interactor_style.renderer = renderer
 
+    iren.SetInteractorStyle(interactor_style)
     iren.Initialize()
     iren.Start()
 
