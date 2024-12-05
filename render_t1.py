@@ -169,10 +169,11 @@ def t1_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tru
     reader = vtk.vtkNIFTIImageReader()
     reader.SetFileName(filename)
     reader.Update()
+    
 
     # Compute volume center and slice bounds
-    extent = reader.GetOutput().GetExtent()
-    x_min, x_max, y_min, y_max, z_min, z_max = extent
+    bounds = reader.GetOutput().GetBounds()
+    x_min, x_max, y_min, y_max, z_min, z_max = bounds
     x_center, y_center, z_center = (x_min + x_max) / 2, (y_min + y_max) / 2, (z_min + z_max) / 2
 
     # Set camera parameters
@@ -230,6 +231,7 @@ def t1_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tru
     ren_window.AddRenderer(renderer)
 
     # Set up the interactive slice interactor
+    extent = reader.GetOutput().GetExtent()
     interactor_style = SliceInteractor(
         mapper=mapper,
         renderer=renderer,

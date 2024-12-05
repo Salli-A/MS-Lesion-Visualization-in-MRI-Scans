@@ -147,10 +147,11 @@ def swi_renderPlane(instance, filename):
 from slice_interactor import SliceInteractor
 
 def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=True, slice_direction='z'):
-    
+
     frame = instance.swi_frame
     layout = instance.swi_layout
 
+    # Set up the VTK rendering context
     widget = QVTKRenderWindowInteractor(frame)
     layout.addWidget(widget)
 
@@ -162,77 +163,42 @@ def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tr
     reader.SetFileName(filename)
     reader.Update()
 
-    # Get the dimensions of the volume to calculate the center
+    # Compute volume center and slice bounds
     extent = reader.GetOutput().GetExtent()
-    x_min, x_max = extent[0], extent[1]
-    x_center = (x_min + x_max) / 2  # Center along the X-axis
-
-    y_min, y_max = extent[2], extent[3]
-    y_center = (y_min + y_max) / 2
-
-    z_min, z_max = extent[4], extent[5]
-    z_center = (z_min + z_max) / 2
-
-    # Initial slice bounds for sagittal view
-    slice_min = x_center - slice_thickness / 2
-    slice_max = x_center + slice_thickness / 2
-
-    # Set up the mapper
+    
+    # Configure the volume mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()
     mapper.SetInputConnection(reader.GetOutputPort())
 
-    # Restrict the mapper to the initial slice bounds
     mapper.CroppingOn()
-    mapper.SetCroppingRegionPlanes(
-        slice_min, slice_max,          # X-axis (slice range)
-        float("-inf"), float("inf"),  # Y-axis (full range)
-        float("-inf"), float("inf")   # Z-axis (full range)
-    )
     mapper.SetCroppingRegionFlags(vtk.VTK_CROP_SUBVOLUME)
 
-    # Set up the color transfer function
+    # Define color and opacity transfer functions
     color_transfer = vtk.vtkColorTransferFunction()
     color_transfer.SetColorSpaceToRGB()
     color_transfer.AddRGBPoint(0, 0, 0, 0)
     color_transfer.AddRGBPoint(512, 1, 1, 1)
 
-    # Set up the opacity transfer function
     scalar_transfer = vtk.vtkPiecewiseFunction()
     scalar_transfer.AddPoint(0, 0)
-    scalar_transfer.AddPoint(256, 0.4)
+    scalar_transfer.AddPoint(256, 0.15)
 
-    
-    # Create the volume property
+    # Create the volume property and actor
     volume_property = vtk.vtkVolumeProperty()
     volume_property.SetColor(color_transfer)
     volume_property.SetScalarOpacity(scalar_transfer)
     volume_property.ShadeOn()
 
-    # Translate and rotate
-    transform = vtk.vtkTransform()
-    transform.Translate(x_center, y_center, z_center)  # Move to center
-    transform.RotateZ(-90)  # Rotate 90 degrees around the Z-axis
-    transform.RotateY(90)  # Rotate 90 degrees around the Y-axis
-    transform.Translate(-x_center, -y_center, -z_center)  # Move back
-
-    # Create the volume actor
     volume = vtk.vtkVolume()
     volume.SetMapper(mapper)
     volume.SetProperty(volume_property)
-    volume.SetUserTransform(transform)
 
-
-    # Set up the renderer and camera
+    # Configure the renderer
     renderer = vtk.vtkRenderer()
-    ren_window.AddRenderer(renderer)
-
     renderer.SetBackground(0.0, 0.0, 0.0)
     renderer.SetActiveCamera(instance.camera)
-
-    # Add the volume actor to the renderer
     renderer.AddVolume(volume)
 
-    
     # Add bounds display if show_bounds is True
     if show_bounds:
         outline_filter = vtk.vtkOutlineFilter()
@@ -248,7 +214,7 @@ def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tr
 
         renderer.AddActor(outline_actor)
 
-
+    ren_window.AddRenderer(renderer)
 
     # Set up the interactive slice interactor
     interactor_style = SliceInteractor(

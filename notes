@@ -7,6 +7,28 @@ The swi / phase seem to not be 100% registered to align. The SWI/pahse have diff
 -Could be due to size mismatch + slicing? maybe possible to create a function to inflate swi/phase to match?
 
 
+Bounds and Extent for each modality (x,y,z) = (x_min->x_ax, y_min->y_max, z_min->z_max)
+Bounds - Spatial coords
+Extent - Object pixels
+
+T1 Bounds: (0.0, 255.0, 0.0, 255.0, 0.0, 175.0)
+T1 Extent: (0, 255, 0, 255, 0, 175)
+
+FLAIR Bounds: (0.0, 249.51171875, 0.0, 249.51171875, 0.0, 190.80000758171082)
+FLAIR Extent: (0, 511, 0, 511, 0, 159)
+
+SWI Bounds: (0.0, 209.16666167974472, 0.0, 239.16666096448898, 0.0, 142.5)
+SWI Extent: (0, 251, 0, 287, 0, 95)
+
+PHASE Bounds: (0.0, 209.16666167974472, 0.0, 239.16666096448898, 0.0, 142.5)
+PHASE Extent: (0, 251, 0, 287, 0, 95)
+
+
+
+
+
+
+
 Needs a way to change opacity/transfer function manually in the app - perhaps best to create a control panel and submission panel seperatly.
 Control panel: 
     views (saggital, axial, coronal),
