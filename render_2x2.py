@@ -109,8 +109,7 @@ class Ui(QtWidgets.QMainWindow):
           frame_geometry.moveCenter(screen_center)
           self.move(frame_geometry.topLeft())
 
-          # Set placeholder text in text field
-          self.text_field.setPlaceholderText("Type here")
+          # Clear textfield for placegolder text
           self.text_field.clear()
 
           # Display case 'id' (only relative path minus the image mode and file type)
@@ -126,7 +125,7 @@ class Ui(QtWidgets.QMainWindow):
           
           print("Submitted")
 
-          bad_quality = self.badQuality_checkbox.isChecked()
+          bad_quality = self.badquality_checkbox.isChecked()
           prl = self.prl_checkbox.isChecked()
           cvs = self.cvs_checkbox.isChecked()
 
@@ -139,7 +138,7 @@ class Ui(QtWidgets.QMainWindow):
 
           # Reset states
           self.text_field.clear()
-          self.badQuality_checkbox.setCheckState(False)
+          self.badquality_checkbox.setCheckState(False)
           self.prl_checkbox.setCheckState(False)
           self.cvs_checkbox.setCheckState(False)
           self.reset_view()
