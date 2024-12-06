@@ -110,8 +110,8 @@ class Ui(QtWidgets.QMainWindow):
           self.move(frame_geometry.topLeft())
 
           # Set placeholder text in text field
-          self.comments_textfield.setPlaceholderText("Text field")
-          self.comments_textfield.clear()
+          self.text_field.setPlaceholderText("Type here")
+          self.text_field.clear()
 
           # Display case 'id' (only relative path minus the image mode and file type)
           self.case_id.setText(file_t1[:-10])
@@ -134,11 +134,11 @@ class Ui(QtWidgets.QMainWindow):
           print("prl: " + str(prl))
           print("cvs: " + str(cvs))
 
-          comment = self.comments_textfield.toPlainText()
+          comment = self.text_field.toPlainText()
           print(comment)
 
           # Reset states
-          self.comments_textfield.clear()
+          self.text_field.clear()
           self.badQuality_checkbox.setCheckState(False)
           self.prl_checkbox.setCheckState(False)
           self.cvs_checkbox.setCheckState(False)

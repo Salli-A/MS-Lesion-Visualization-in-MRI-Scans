@@ -1,8 +1,6 @@
 
 
 
-
-
 The swi / phase seem to not be 100% registered to align. The SWI/pahse have different coordinate systems/orientation and when rotated and sliced it does not seem to match 100%.
 -Could be due to size mismatch + slicing? maybe possible to create a function to inflate swi/phase to match?
 
