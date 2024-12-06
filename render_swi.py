@@ -147,7 +147,6 @@ def swi_renderPlane(instance, filename):
 from slice_interactor import SliceInteractor
 
 def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=True, slice_direction='z'):
-
     frame = instance.swi_frame
     layout = instance.swi_layout
 
@@ -163,9 +162,12 @@ def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tr
     reader.SetFileName(filename)
     reader.Update()
 
-    # Compute volume center and slice bounds
-    extent = reader.GetOutput().GetExtent()
-    
+    # Get original bounds for repositioning
+    original_bounds = reader.GetOutput().GetBounds()
+    center_x = (original_bounds[1] + original_bounds[0]) / 2
+    center_y = (original_bounds[3] + original_bounds[2]) / 2
+    center_z = (original_bounds[5] + original_bounds[4]) / 2
+
     # Configure the volume mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()
     mapper.SetInputConnection(reader.GetOutputPort())
@@ -193,6 +195,14 @@ def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tr
     volume.SetMapper(mapper)
     volume.SetProperty(volume_property)
 
+    # Apply rotation and translation to maintain position
+    transform = vtk.vtkTransform()
+    transform.Translate(center_x, center_y, center_z)
+    transform.RotateZ(-90)
+    transform.RotateY(90)
+    transform.Translate(-center_x, -center_y, -center_z)
+    volume.SetUserTransform(transform)
+
     # Configure the renderer
     renderer = vtk.vtkRenderer()
     renderer.SetBackground(0.0, 0.0, 0.0)
@@ -203,10 +213,15 @@ def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tr
     if show_bounds:
         outline_filter = vtk.vtkOutlineFilter()
         outline_filter.SetInputConnection(reader.GetOutputPort())
-        outline_filter.Update()
+
+        # Transform the bounding box
+        outline_transform = vtk.vtkTransformPolyDataFilter()
+        outline_transform.SetTransform(transform)
+        outline_transform.SetInputConnection(outline_filter.GetOutputPort())
+        outline_transform.Update()
 
         outline_mapper = vtk.vtkPolyDataMapper()
-        outline_mapper.SetInputConnection(outline_filter.GetOutputPort())
+        outline_mapper.SetInputConnection(outline_transform.GetOutputPort())
 
         outline_actor = vtk.vtkActor()
         outline_actor.SetMapper(outline_mapper)
@@ -216,13 +231,18 @@ def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tr
 
     ren_window.AddRenderer(renderer)
 
+    # Update slicing direction based on rotation
+    slice_mapping = {'x': 'y', 'y': 'z', 'z': 'x'}  # Example mapping
+    mapped_slice_direction = slice_mapping.get(slice_direction, slice_direction)
+
     # Set up the interactive slice interactor
+    bounds = reader.GetOutput().GetBounds()  # Original bounds for slicing
     interactor_style = SliceInteractor(
         mapper=mapper,
         renderer=renderer,
-        extent=extent,
+        bounds=bounds,
         slice_thickness=slice_thickness,
-        slice_direction=slice_direction
+        slice_direction=mapped_slice_direction
     )
     iren.SetInteractorStyle(interactor_style)
 

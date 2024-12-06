@@ -231,11 +231,10 @@ def t1_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tru
     ren_window.AddRenderer(renderer)
 
     # Set up the interactive slice interactor
-    extent = reader.GetOutput().GetExtent()
     interactor_style = SliceInteractor(
         mapper=mapper,
         renderer=renderer,
-        extent=extent,
+        bounds = bounds,
         slice_thickness=slice_thickness,
         slice_direction=slice_direction
     )

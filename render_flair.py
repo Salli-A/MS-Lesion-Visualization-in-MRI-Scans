@@ -164,9 +164,6 @@ def flair_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=
     reader.SetFileName(filename)
     reader.Update()
 
-    # Compute volume center and slice bounds
-    extent = reader.GetOutput().GetExtent()
-    
     # Configure the volume mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()
     mapper.SetInputConnection(reader.GetOutputPort())
@@ -218,10 +215,11 @@ def flair_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=
     ren_window.AddRenderer(renderer)
 
     # Set up the interactive slice interactor
+    bounds = reader.GetOutput().GetBounds()
     interactor_style = SliceInteractor(
         mapper=mapper,
         renderer=renderer,
-        extent=extent,
+        bounds = bounds,
         slice_thickness=slice_thickness,
         slice_direction=slice_direction
     )
