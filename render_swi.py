@@ -225,7 +225,7 @@ def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tr
 
         outline_actor = vtk.vtkActor()
         outline_actor.SetMapper(outline_mapper)
-        outline_actor.GetProperty().SetColor(1.0, 1.0, 1.0)  # White color for bounds
+        outline_actor.GetProperty().SetColor(1.0, 1.0, 1.0)
 
         renderer.AddActor(outline_actor)
 

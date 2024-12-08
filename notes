@@ -39,7 +39,7 @@ In theory it should be
     transform.Translate(center_x, -center_y, center_z)
     volume.SetUserTransform(transform)
 
-Where it move the object to the global center, rotates and moves it back. But it doesn't work and this works - trying to figure out why.
+Where it move the object to the global center, rotates and moves it back. But it doesn't work and this works - trying to figure out why. 
 
 
 
