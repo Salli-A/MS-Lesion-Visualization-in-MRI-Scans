@@ -78,10 +78,27 @@ class Ui(QtWidgets.QMainWindow):
 
 
           # Testing with volume slices
-          self.t1_window = t1_renderPlaneVolume(self,filename[0])
-          self.flair_window = flair_renderPlaneVolume(self,filename[1])
-          self.swi_window = swi_renderPlaneVolume(self,filename[2])
-          self.phase_window = phase_renderPlaneVolume(self,filename[3])
+          self.t1_window, self.t1_iren = t1_renderPlaneVolume(self,filename[0])
+          self.flair_window, self.flair_iren = flair_renderPlaneVolume(self,filename[1])
+          self.swi_window, self.swi_iren = swi_renderPlaneVolume(self,filename[2])
+          self.phase_window, self.phase_iren = phase_renderPlaneVolume(self,filename[3])
+
+          
+          self.t1_iren.SetInteractorStyle(self.interactor)
+          self.flair_iren.SetInteractorStyle(self.interactor)
+          self.swi_iren.SetInteractorStyle(self.interactor)
+          self.phase_iren.SetInteractorStyle(self.interactor)
+
+          self.t1_iren.Initialize()
+          self.flair_iren.Initialize()
+          self.swi_iren.Initialize()
+          self.phase_iren.Initialize()
+
+          self.t1_iren.Start()
+          self.flair_iren.Start()
+          self.swi_iren.Start()
+          self.phase_iren.Start()
+
 
           
 

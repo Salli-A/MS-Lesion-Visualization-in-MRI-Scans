@@ -220,9 +220,5 @@ def flair_renderPlaneVolume(self, filename, show_bounds=True):
         bounds = bounds
     )
 
-    iren.SetInteractorStyle(self.interactor)
 
-    iren.Initialize()
-    iren.Start()
-
-    return ren_window
+    return ren_window, iren

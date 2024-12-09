@@ -245,9 +245,4 @@ def swi_renderPlaneVolume(self, filename, slice_thickness=12, show_bounds=True, 
         bounds = bounds
     )
 
-    iren.SetInteractorStyle(self.interactor)
-
-    iren.Initialize()
-    iren.Start()
-
-    return ren_window
+    return ren_window, iren
