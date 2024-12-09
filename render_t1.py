@@ -15,10 +15,10 @@ from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage
 
 
 
-def t1_renderWindow(instance, filename):
+def t1_renderWindow(self, filename):
 
-    frame = instance.t1_frame
-    layout = instance.t1_layout
+    frame = self.t1_frame
+    layout = self.t1_layout
 
     widget = QVTKRenderWindowInteractor(frame)
     layout.addWidget(widget)
@@ -61,7 +61,7 @@ def t1_renderWindow(instance, filename):
     ren_window.AddRenderer(renderer)
 
     renderer.SetBackground(0., 0., 0.)
-    renderer.SetActiveCamera(instance.camera)
+    renderer.SetActiveCamera(self.camera)
 
     # Add the volume actor to the renderer
     renderer.AddActor(volume)
@@ -71,10 +71,10 @@ def t1_renderWindow(instance, filename):
 
     return ren_window
 
-def t1_renderPlane(instance, filename):
+def t1_renderPlane(self, filename):
 
-    frame = instance.t1_frame
-    layout = instance.t1_layout
+    frame = self.t1_frame
+    layout = self.t1_layout
 
     widget = QVTKRenderWindowInteractor(frame)
     layout.addWidget(widget)
@@ -144,19 +144,19 @@ def t1_renderPlane(instance, filename):
 
 from slice_interactor import SliceInteractor
 
-def t1_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=True, slice_direction='z'):
+def t1_renderPlaneVolume(self, filename, slice_thickness=12, show_bounds=True, slice_direction='z'):
     """
     Render a volume using the SliceInteractor to allow interactive slicing.
 
-    :param instance: The main instance containing the layout and frame.
+    :param self: The main self containing the layout and frame.
     :param filename: The file path of the NIFTI image to render.
     :param slice_thickness: The thickness of each slice.
     :param show_bounds: Whether to display the bounds of the volume.
     :param slice_direction: The slicing direction ('x', 'y', or 'z').
     :return: The render window.
     """
-    frame = instance.t1_frame
-    layout = instance.t1_layout
+    frame = self.t1_frame
+    layout = self.t1_layout
 
     # Set up the VTK rendering context
     widget = QVTKRenderWindowInteractor(frame)
@@ -178,7 +178,7 @@ def t1_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tru
 
     # Set camera parameters
     distance = max(x_max - x_min, y_max - y_min, z_max - z_min) * 1.5
-    instance.set_view(focalPoint=(x_center, y_center, z_center), position=(x_center, y_center, z_center + distance))
+    self.set_view(focalPoint=(x_center, y_center, z_center), position=(x_center, y_center, z_center + distance))
 
     # Configure the volume mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()
@@ -210,7 +210,7 @@ def t1_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tru
     # Configure the renderer
     renderer = vtk.vtkRenderer()
     renderer.SetBackground(0.0, 0.0, 0.0)
-    renderer.SetActiveCamera(instance.camera)
+    renderer.SetActiveCamera(self.camera)
     renderer.AddVolume(volume)
 
     # Add bounds display if show_bounds is True
@@ -230,15 +230,13 @@ def t1_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tru
 
     ren_window.AddRenderer(renderer)
 
-    # Set up the interactive slice interactor
-    interactor_style = SliceInteractor(
+    self.interactor.addWindow(
         mapper=mapper,
         renderer=renderer,
-        bounds = bounds,
-        slice_thickness=slice_thickness,
-        slice_direction=slice_direction
+        bounds = bounds
     )
-    iren.SetInteractorStyle(interactor_style)
+
+    iren.SetInteractorStyle(self.interactor)
 
     iren.Initialize()
     iren.Start()

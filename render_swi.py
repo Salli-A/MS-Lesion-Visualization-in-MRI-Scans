@@ -14,10 +14,10 @@ from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage
 
 
-def swi_renderWindow(instance, filename):
+def swi_renderWindow(self, filename):
     
-    frame = instance.swi_frame
-    layout = instance.swi_layout
+    frame = self.swi_frame
+    layout = self.swi_layout
 
     widget = QVTKRenderWindowInteractor(frame)
     layout.addWidget(widget)
@@ -73,7 +73,7 @@ def swi_renderWindow(instance, filename):
     ren_window.AddRenderer(renderer)
 
     renderer.SetBackground(0.0, 0.0, 0.0)
-    renderer.SetActiveCamera(instance.camera)
+    renderer.SetActiveCamera(self.camera)
 
     # Add the volume actor to the renderer
     renderer.AddActor(volume)
@@ -83,10 +83,10 @@ def swi_renderWindow(instance, filename):
 
     return ren_window
 
-def swi_renderPlane(instance, filename):
+def swi_renderPlane(self, filename):
     
-    frame = instance.swi_frame
-    layout = instance.swi_layout
+    frame = self.swi_frame
+    layout = self.swi_layout
 
     widget = QVTKRenderWindowInteractor(frame)
     layout.addWidget(widget)
@@ -146,9 +146,9 @@ def swi_renderPlane(instance, filename):
 
 from slice_interactor import SliceInteractor
 
-def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=True, slice_direction='z'):
-    frame = instance.swi_frame
-    layout = instance.swi_layout
+def swi_renderPlaneVolume(self, filename, slice_thickness=12, show_bounds=True, slice_direction='z'):
+    frame = self.swi_frame
+    layout = self.swi_layout
 
     # Set up the VTK rendering context
     widget = QVTKRenderWindowInteractor(frame)
@@ -206,7 +206,7 @@ def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tr
     # Configure the renderer
     renderer = vtk.vtkRenderer()
     renderer.SetBackground(0.0, 0.0, 0.0)
-    renderer.SetActiveCamera(instance.camera)
+    renderer.SetActiveCamera(self.camera)
     renderer.AddVolume(volume)
 
     # Add bounds display if show_bounds is True
@@ -237,14 +237,15 @@ def swi_renderPlaneVolume(instance, filename, slice_thickness=12, show_bounds=Tr
 
     # Set up the interactive slice interactor
     bounds = reader.GetOutput().GetBounds()  # Original bounds for slicing
-    interactor_style = SliceInteractor(
+    
+    
+    self.interactor.addWindow(
         mapper=mapper,
         renderer=renderer,
-        bounds=bounds,
-        slice_thickness=slice_thickness,
-        slice_direction=mapped_slice_direction
+        bounds = bounds
     )
-    iren.SetInteractorStyle(interactor_style)
+
+    iren.SetInteractorStyle(self.interactor)
 
     iren.Initialize()
     iren.Start()

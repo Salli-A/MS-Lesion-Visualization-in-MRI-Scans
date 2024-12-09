@@ -16,6 +16,7 @@ from PyQt5.QtCore import QTimer
 
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
+from slice_interactor import SliceInteractor
 
 # get data path from the first argument given
 #file = sys.argv[1]
@@ -73,12 +74,16 @@ class Ui(QtWidgets.QMainWindow):
           self.swi_window = swi_renderPlane(self,filename[2])
           self.phase_window = phase_renderPlane(self,filename[3])
           """
+          self.interactor = SliceInteractor(slice_thickness=13, slice_direction = 'z')
+
 
           # Testing with volume slices
           self.t1_window = t1_renderPlaneVolume(self,filename[0])
           self.flair_window = flair_renderPlaneVolume(self,filename[1])
           self.swi_window = swi_renderPlaneVolume(self,filename[2])
           self.phase_window = phase_renderPlaneVolume(self,filename[3])
+
+          
 
 
           
