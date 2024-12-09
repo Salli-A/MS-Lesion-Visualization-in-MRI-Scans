@@ -166,6 +166,30 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_4">
           <item>
+           <widget class="QToolButton" name="axial_button">
+            <property name="text">
+             <string>Axial</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="coronal_button">
+            <property name="text">
+             <string>Coronal</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="saggital_button">
+            <property name="text">
+             <string>Saggital</string>
+            </property>
+            <property name="autoExclusive">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="reset_button">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
