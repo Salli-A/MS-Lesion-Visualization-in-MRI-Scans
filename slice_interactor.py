@@ -13,7 +13,8 @@ class SlicePlanes(vtk.vtkPlanes):
 
         self.windows = []
 
-        self.step = 10 / 2 
+        self.thickness = 10
+        self.step = self.thickness / 2 
         self.direction = (4,5)
         self.zoom_factor = 1.1
     
@@ -74,7 +75,8 @@ class SlicePlanes(vtk.vtkPlanes):
         """
         Set the thickness of each slice.
         """
-        self.step = thickness / 2
+        self.thickness = thickness
+        self.step = self.thickness / 2  
         self.set_cropping_planes()
 
     def setSliceZoomFactor(self, factor):
@@ -88,7 +90,7 @@ class SlicePlanes(vtk.vtkPlanes):
     def set_cropping_planes(self):
         """Set the cropping planes based on the current slice and direction for all windows."""
 
-        self.croppingPlane[self.direction_min], self.croppingPlane[self.direction_max] = self.current_slice - self.step, self.current_slice + self.step
+        self.croppingPlane[self.direction_min], self.croppingPlane[self.direction_max] = self.current_slice, self.current_slice + self.thickness
 
         for window in self.windows:
             mapper = window['mapper']
@@ -143,7 +145,9 @@ class SliceInteractor(vtk.vtkInteractorStyleTrackballCamera):
             for window in self.SlicePlanes.windows:
 
                 # Move slice forward
-                self.SlicePlanes.current_slice = self.SlicePlanes.current_slice + self.SlicePlanes.step
+                self.SlicePlanes.current_slice = min(
+                    self.SlicePlanes.current_slice + self.SlicePlanes.step,
+                    self.SlicePlanes.current_slice - self.SlicePlanes.thickness)
                 self.SlicePlanes.set_cropping_planes()
             window['renderer'].GetRenderWindow().Render()
 
@@ -156,7 +160,9 @@ class SliceInteractor(vtk.vtkInteractorStyleTrackballCamera):
             for window in self.SlicePlanes.windows:
 
                 # Move slice backward
-                self.SlicePlanes.current_slice = self.SlicePlanes.current_slice - self.SlicePlanes.step
+                self.SlicePlanes.current_slice = max(
+                    self.SlicePlanes.current_slice - self.SlicePlanes.step,
+                    self.SlicePlanes.current_slice + self.SlicePlanes.thickness)
                 self.SlicePlanes.set_cropping_planes()
 
             window['renderer'].GetRenderWindow().Render()
