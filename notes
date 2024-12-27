@@ -57,5 +57,5 @@ Control panel:
     activate segmentations (automatic or premade masks?),
     
 
-Needs an automatic intitial opacity - based on histogram? (pehaps could be good to do on per slice basis?)
+A automatic intitial opacity - based on histogram? (pehaps could be good to do on per slice basis?)
 

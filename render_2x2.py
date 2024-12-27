@@ -3,19 +3,17 @@ import vtk
 import sys
 import pyvista as pv
 
-from render_t1 import t1_renderWindow, t1_renderPlane, t1_renderPlaneVolume
-from render_flair import flair_renderWindow, flair_renderPlane, flair_renderPlaneVolume
-from render_swi import swi_renderWindow, swi_renderPlane, swi_renderPlaneVolume
-from render_phase import phase_renderWindow, phase_renderPlane, phase_renderPlaneVolume
-
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
-    QApplication, QCheckBox, QLineEdit, QDesktopWidget)
+    QApplication, QCheckBox, QLineEdit, QDesktopWidget, QSlider, QButtonGroup)
 from PyQt5.QtCore import QTimer
 
 
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
+from slice_interactor import SliceInteractor, SlicePlanes
+
+from render_multimodal import renderPlaneVolume
 
 # get data path from the first argument given
 #file = sys.argv[1]
@@ -54,32 +52,44 @@ class Ui(QtWidgets.QMainWindow):
      def render_modalities(self,filename):
 
           
-          # One camera for all modalities - only for renderWindow, not implemented for renderPlane
+          # Setup camera for all modalities
           self.setup_camera()
+          # Set up the slice planes for all modalities
+          self.SlicePlanes = SlicePlanes(self)
 
           # Indivual rendering code for modalities
-          # (Can be combined into one function if it takes into account the transfer function and stuff)
+               # (Can be combined into one function if it takes into account the transfer function and stuff)
          
-          """
-          # Entire volume
-          self.t1_window = t1_renderWindow(self,filename[0])
-          self.flair_window = flair_renderWindow(self,filename[1])
-          self.swi_window = swi_renderWindow(self,filename[2])
-          self.phase_window = phase_renderWindow(self,filename[3])
-          """
-          """
-          # 2d slices
-          self.t1_window = t1_renderPlane(self,filename[0])
-          self.flair_window = flair_renderPlane(self,filename[1])
-          self.swi_window = swi_renderPlane(self,filename[2])
-          self.phase_window = phase_renderPlane(self,filename[3])
-          """
 
-          # Testing with volume slices
-          self.t1_window = t1_renderPlaneVolume(self,filename[0])
-          self.flair_window = flair_renderPlaneVolume(self,filename[1])
-          self.swi_window = swi_renderPlaneVolume(self,filename[2])
-          self.phase_window = phase_renderPlaneVolume(self,filename[3])
+          # Volume slices
+          self.t1_window, self.t1_iren = renderPlaneVolume(self, frame=self.t1_frame, layout=self.t1_layout, filename=filename[0])
+          self.flair_window, self.flair_iren = renderPlaneVolume(self, frame=self.flair_frame, layout=self.flair_layout, filename=filename[1])
+          self.swi_window, self.swi_iren = renderPlaneVolume(self, frame=self.swi_frame, layout=self.swi_layout, filename=filename[2])
+          self.phase_window, self.phase_iren = renderPlaneVolume(self, frame=self.phase_frame, layout=self.phase_layout, filename=filename[3])
+
+          # Initate the slice planes
+          self.SlicePlanes.initPlanes()
+          
+          interactor_t1 = SliceInteractor(self)
+          interactor_flair = SliceInteractor(self)
+          interactor_swi = SliceInteractor(self)
+          interactor_phase = SliceInteractor(self)
+
+
+          self.t1_iren.SetInteractorStyle(interactor_t1)
+          self.flair_iren.SetInteractorStyle(interactor_flair)
+          self.swi_iren.SetInteractorStyle(interactor_swi)
+          self.phase_iren.SetInteractorStyle(interactor_phase)
+
+          self.t1_iren.Initialize()
+          self.flair_iren.Initialize()
+          self.swi_iren.Initialize()
+          self.phase_iren.Initialize()
+
+          self.t1_iren.Start()
+          self.flair_iren.Start()
+          self.swi_iren.Start()
+          self.phase_iren.Start()
 
 
           
@@ -122,6 +132,15 @@ class Ui(QtWidgets.QMainWindow):
           # Reset view button action
           self.reset_button.clicked.connect(self.reset_view)
 
+          self.buttongroup_view = QButtonGroup()
+          self.buttongroup_view.addButton(self.axial_button)
+          self.buttongroup_view.addButton(self.coronal_button)
+          self.buttongroup_view.addButton(self.sagittal_button) 
+          self.buttongroup_view.setExclusive(True)
+          self.axial_button.clicked.connect(self.change_slicing)
+          self.coronal_button.clicked.connect(self.change_slicing)
+          self.sagittal_button.clicked.connect(self.change_slicing)
+
      def submit(self):
           
           print("Submitted")
@@ -161,7 +180,6 @@ class Ui(QtWidgets.QMainWindow):
           self.camera.SetPosition(self.camera_position)
           self.camera.SetFocalPoint(self.camera_focalPoint)
 
-
      def setup_camera(self):
           self.camera = vtk.vtkCamera()
           viewUp = (0.,-1.,0)
@@ -169,7 +187,14 @@ class Ui(QtWidgets.QMainWindow):
           focalPoint = (100, 100, 100)
           self.set_view(viewUp, position, focalPoint)
 
-    
+     def change_slicing(self):
+          
+          if self.axial_button.isChecked():
+               self.SlicePlanes.setSliceDirection('x')
+          if self.coronal_button.isChecked():
+               self.SlicePlanes.setSliceDirection('y')
+          if self.sagittal_button.isChecked():
+               self.SlicePlanes.setSliceDirection('z')
 
 
 
