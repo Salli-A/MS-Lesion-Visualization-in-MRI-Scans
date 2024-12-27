@@ -51,8 +51,9 @@ class Ui(QtWidgets.QMainWindow):
      def render_modalities(self,filename):
 
           
-          # One camera for all modalities
+          # Setup camera for all modalities
           self.setup_camera()
+          # Set up the slice planes for all modalities
           self.SlicePlanes = SlicePlanes()
 
           # Indivual rendering code for modalities
