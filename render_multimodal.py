@@ -42,12 +42,6 @@ def renderPlaneVolume(self, frame, layout, filename, show_bounds=True):
 
     # Compute volume center and slice bounds
     bounds = reader.GetOutput().GetBounds()
-    x_min, x_max, y_min, y_max, z_min, z_max = bounds
-    x_center, y_center, z_center = (x_min + x_max) / 2, (y_min + y_max) / 2, (z_min + z_max) / 2
-
-    # Set camera parameters
-    distance = max(x_max - x_min, y_max - y_min, z_max - z_min) * 1.5
-    self.set_view(focalPoint=(x_center, y_center, z_center), position=(x_center, y_center, z_center + distance))
 
     # Configure the volume mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()

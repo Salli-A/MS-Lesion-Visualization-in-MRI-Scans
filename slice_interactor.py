@@ -5,7 +5,7 @@ class SlicePlanes(vtk.vtkPlanes):
     Initilize slice planes across modalities for 'sync' rendering.
     Keeps track of the slice planes for each modality and is updated via SliceInteractor.
     """
-    def __init__(self):
+    def __init__(self, instance):
         """ 
         Initlize the slice planes, direction, thickness and zoom factor.
         """
@@ -17,6 +17,8 @@ class SlicePlanes(vtk.vtkPlanes):
         self.step = self.thickness / 2 
         self.direction = (4,5)
         self.zoom_factor = 1.1
+
+        self.instance = instance
     
     def initPlanes(self, slice_thickness = 10, slice_direction = 'z', zoom_factor = 1.1):
         """
@@ -46,6 +48,13 @@ class SlicePlanes(vtk.vtkPlanes):
             global_bounds[5] = max(global_bounds[5], bounds[5])
             
         self.global_bounds = global_bounds
+        
+        x_min, x_max, y_min, y_max, z_min, z_max = bounds
+        x_center, y_center, z_center = (x_min + x_max) / 2, (y_min + y_max) / 2, (z_min + z_max) / 2
+
+        # Set camera parameters
+        d_camera = max(x_max - x_min, y_max - y_min, z_max - z_min) * 2
+        self.instance.set_view(focalPoint=(x_center, y_center, z_center), position=(x_center, y_center, z_center + d_camera))
 
     def setSliceDirection(self, direction):
         """
@@ -65,6 +74,7 @@ class SlicePlanes(vtk.vtkPlanes):
             self.direction_min = 4
             self.direction_max = 5
         
+        self.findBounds()
         
         self.slice_min, self.slice_max = self.global_bounds[self.direction_min], self.global_bounds[self.direction_max]
         self.current_slice = self.slice_min + (self.slice_max - self.slice_min) / 2

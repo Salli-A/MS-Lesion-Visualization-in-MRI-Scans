@@ -5,7 +5,7 @@ import pyvista as pv
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
-    QApplication, QCheckBox, QLineEdit, QDesktopWidget)
+    QApplication, QCheckBox, QLineEdit, QDesktopWidget, QSlider, QButtonGroup)
 from PyQt5.QtCore import QTimer
 
 
@@ -54,7 +54,7 @@ class Ui(QtWidgets.QMainWindow):
           # Setup camera for all modalities
           self.setup_camera()
           # Set up the slice planes for all modalities
-          self.SlicePlanes = SlicePlanes()
+          self.SlicePlanes = SlicePlanes(self)
 
           # Indivual rendering code for modalities
           # (Can be combined into one function if it takes into account the transfer function and stuff)
@@ -131,6 +131,15 @@ class Ui(QtWidgets.QMainWindow):
           # Reset view button action
           self.reset_button.clicked.connect(self.reset_view)
 
+          self.buttongroup_view = QButtonGroup()
+          self.buttongroup_view.addButton(self.axial_button)
+          self.buttongroup_view.addButton(self.coronal_button)
+          self.buttongroup_view.addButton(self.sagittal_button) 
+          self.buttongroup_view.setExclusive(True)
+          self.axial_button.clicked.connect(self.change_slicing)
+          self.coronal_button.clicked.connect(self.change_slicing)
+          self.sagittal_button.clicked.connect(self.change_slicing)
+
      def submit(self):
           
           print("Submitted")
@@ -170,7 +179,6 @@ class Ui(QtWidgets.QMainWindow):
           self.camera.SetPosition(self.camera_position)
           self.camera.SetFocalPoint(self.camera_focalPoint)
 
-
      def setup_camera(self):
           self.camera = vtk.vtkCamera()
           viewUp = (0.,-1.,0)
@@ -178,7 +186,14 @@ class Ui(QtWidgets.QMainWindow):
           focalPoint = (100, 100, 100)
           self.set_view(viewUp, position, focalPoint)
 
-    
+     def change_slicing(self):
+          
+          if self.axial_button.isChecked():
+               self.SlicePlanes.setSliceDirection('x')
+          if self.coronal_button.isChecked():
+               self.SlicePlanes.setSliceDirection('y')
+          if self.sagittal_button.isChecked():
+               self.SlicePlanes.setSliceDirection('z')
 
 
 
