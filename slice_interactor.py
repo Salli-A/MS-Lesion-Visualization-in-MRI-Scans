@@ -66,9 +66,10 @@ class SlicePlanes(vtk.vtkPlanes):
             self.direction_max = 5
         
         
-        slice_min, slice_max = self.global_bounds[self.direction_min], self.global_bounds[self.direction_max]
-        self.current_slice = slice_min + (slice_max - slice_min) / 2
+        self.slice_min, self.slice_max = self.global_bounds[self.direction_min], self.global_bounds[self.direction_max]
+        self.current_slice = self.slice_min + (self.slice_max - self.slice_min) / 2
         self.croppingPlane = self.global_bounds
+
         self.set_cropping_planes()
 
     def setSliceThickness(self, thickness):
@@ -142,14 +143,13 @@ class SliceInteractor(vtk.vtkInteractorStyleTrackballCamera):
             # Zoom in
             self.instance.camera.Zoom(self.SlicePlanes.zoom_factor)
         else:
-            for window in self.SlicePlanes.windows:
 
-                # Move slice forward
-                self.SlicePlanes.current_slice = min(
-                    self.SlicePlanes.current_slice + self.SlicePlanes.step,
-                    self.SlicePlanes.current_slice - self.SlicePlanes.thickness)
-                self.SlicePlanes.set_cropping_planes()
-            window['renderer'].GetRenderWindow().Render()
+            # Move slice forward
+            self.SlicePlanes.current_slice = min(
+                self.SlicePlanes.current_slice + self.SlicePlanes.step,
+                self.SlicePlanes.slice_max - self.SlicePlanes.thickness)
+            self.SlicePlanes.set_cropping_planes()
+        self.instance.render_all()
 
     def on_scroll_backward(self, obj, event):
         
@@ -157,12 +157,10 @@ class SliceInteractor(vtk.vtkInteractorStyleTrackballCamera):
             # Zoom out
             self.instance.camera.Zoom(1 / self.SlicePlanes.zoom_factor)
         else:
-            for window in self.SlicePlanes.windows:
 
-                # Move slice backward
-                self.SlicePlanes.current_slice = max(
-                    self.SlicePlanes.current_slice - self.SlicePlanes.step,
-                    self.SlicePlanes.current_slice + self.SlicePlanes.thickness)
-                self.SlicePlanes.set_cropping_planes()
-
-            window['renderer'].GetRenderWindow().Render()
+            # Move slice backward
+            self.SlicePlanes.current_slice = max(
+                self.SlicePlanes.current_slice - self.SlicePlanes.step,
+                self.SlicePlanes.slice_min + self.SlicePlanes.thickness)
+            self.SlicePlanes.set_cropping_planes()
+        self.instance.render_all()
