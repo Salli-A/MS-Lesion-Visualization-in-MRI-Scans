@@ -27,8 +27,6 @@ class SliceInteractor(vtk.vtkInteractorStyleTrackballCamera):
         :param renderer: vtkRenderer
         :param bounds: Tuple specifying the data bounds (output of GetBounds())
         """
-        if not hasattr(mapper, 'SetCroppingRegionPlanes'):
-            raise ValueError("Provided mapper must support cropping region planes.")
 
         # Determine the slice range based on the direction in global coordinates
         if self.slice_direction == 'x':

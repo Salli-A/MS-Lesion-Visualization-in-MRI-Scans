@@ -3,11 +3,6 @@ import vtk
 import sys
 import pyvista as pv
 
-from render_t1 import t1_renderWindow, t1_renderPlane, t1_renderPlaneVolume
-from render_flair import flair_renderWindow, flair_renderPlane, flair_renderPlaneVolume
-from render_swi import swi_renderWindow, swi_renderPlane, swi_renderPlaneVolume
-from render_phase import phase_renderWindow, phase_renderPlane, phase_renderPlaneVolume
-
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
     QApplication, QCheckBox, QLineEdit, QDesktopWidget)
@@ -18,14 +13,16 @@ from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from slice_interactor import SliceInteractor
 
+from render_multimodal import renderPlaneVolume
+
 # get data path from the first argument given
 #file = sys.argv[1]
 
 # Hardcode paths for testing multiwindow qt design
-file_t1 = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_t1.nii.gz'
-file_flair = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_flair.nii.gz'
-file_swi = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiMag.nii.gz'
-file_phase = 'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiPhase.nii.gz'
+file_t1 = r'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_t1.nii.gz'
+file_flair = r'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_flair.nii.gz'
+file_swi = r'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiMag.nii.gz'
+file_phase = r'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiPhase.nii.gz'
 
 files = [file_t1, file_flair, file_swi, file_phase]
 
@@ -54,7 +51,7 @@ class Ui(QtWidgets.QMainWindow):
      def render_modalities(self,filename):
 
           
-          # One camera for all modalities - only for renderWindow, not implemented for renderPlane
+          # One camera for all modalities
           self.setup_camera()
 
           # Indivual rendering code for modalities
@@ -76,12 +73,11 @@ class Ui(QtWidgets.QMainWindow):
           """
           self.interactor = SliceInteractor(slice_thickness=13, slice_direction = 'z')
 
-
           # Testing with volume slices
-          self.t1_window, self.t1_iren = t1_renderPlaneVolume(self,filename[0])
-          self.flair_window, self.flair_iren = flair_renderPlaneVolume(self,filename[1])
-          self.swi_window, self.swi_iren = swi_renderPlaneVolume(self,filename[2])
-          self.phase_window, self.phase_iren = phase_renderPlaneVolume(self,filename[3])
+          self.t1_window, self.t1_iren = renderPlaneVolume(self, frame=self.t1_frame, layout=self.t1_layout, filename=filename[0])
+          self.flair_window, self.flair_iren = renderPlaneVolume(self, frame=self.flair_frame, layout=self.flair_layout, filename=filename[1])
+          self.swi_window, self.swi_iren = renderPlaneVolume(self, frame=self.swi_frame, layout=self.swi_layout, filename=filename[2])
+          self.phase_window, self.phase_iren = renderPlaneVolume(self, frame=self.phase_frame, layout=self.phase_layout, filename=filename[3])
 
           
           self.t1_iren.SetInteractorStyle(self.interactor)
