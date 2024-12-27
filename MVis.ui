@@ -451,7 +451,4 @@ p, li { white-space: pre-wrap; }
  </widget>
  <resources/>
  <connections/>
- <buttongroups>
-  <buttongroup name="buttongroup_view"/>
- </buttongroups>
 </ui>

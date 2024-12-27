@@ -57,7 +57,7 @@ class Ui(QtWidgets.QMainWindow):
           self.SlicePlanes = SlicePlanes(self)
 
           # Indivual rendering code for modalities
-          # (Can be combined into one function if it takes into account the transfer function and stuff)
+               # (Can be combined into one function if it takes into account the transfer function and stuff)
          
 
           # Volume slices
