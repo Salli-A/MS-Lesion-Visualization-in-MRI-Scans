@@ -126,7 +126,7 @@ class Ui(QtWidgets.QMainWindow):
           
           print("Submitted")
 
-          bad_quality = self.badquality_checkbox.isChecked()
+          bad_quality = self.quality_checkbox.isChecked()
           prl = self.prl_checkbox.isChecked()
           cvs = self.cvs_checkbox.isChecked()
 
@@ -139,7 +139,7 @@ class Ui(QtWidgets.QMainWindow):
 
           # Reset states
           self.text_field.clear()
-          self.badquality_checkbox.setCheckState(False)
+          self.quality_checkbox.setCheckState(False)
           self.prl_checkbox.setCheckState(False)
           self.cvs_checkbox.setCheckState(False)
           self.reset_view()
