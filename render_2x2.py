@@ -132,6 +132,7 @@ class Ui(QtWidgets.QMainWindow):
           # Reset view button action
           self.reset_button.clicked.connect(self.reset_view)
 
+          # Axial, coronal, sagittal buttons
           self.buttongroup_view = QButtonGroup()
           self.buttongroup_view.addButton(self.axial_button)
           self.buttongroup_view.addButton(self.coronal_button)
@@ -140,6 +141,10 @@ class Ui(QtWidgets.QMainWindow):
           self.axial_button.clicked.connect(self.change_slicing)
           self.coronal_button.clicked.connect(self.change_slicing)
           self.sagittal_button.clicked.connect(self.change_slicing)
+
+          # Thickeness slider
+          self.thickness_slider.setRange(1, 30)
+          self.thickness_slider.valueChanged.connect(self.update_thickness)
 
      def submit(self):
           
@@ -196,6 +201,9 @@ class Ui(QtWidgets.QMainWindow):
           if self.sagittal_button.isChecked():
                self.SlicePlanes.setSliceDirection('z')
 
+     def update_thickness(self):
+          thickness = self.thickness_slider.value()
+          self.SlicePlanes.setSliceThickness(thickness)
 
 
 

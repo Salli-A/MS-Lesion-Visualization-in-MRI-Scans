@@ -52,7 +52,8 @@ class SlicePlanes(vtk.vtkPlanes):
         x_min, x_max, y_min, y_max, z_min, z_max = bounds
         x_center, y_center, z_center = (x_min + x_max) / 2, (y_min + y_max) / 2, (z_min + z_max) / 2
 
-        # Set camera parameters
+        # Set camera parameters 
+        # Needs to be adjusted for slice direction
         d_camera = max(x_max - x_min, y_max - y_min, z_max - z_min) * 2
         self.instance.set_view(focalPoint=(x_center, y_center, z_center), position=(x_center, y_center, z_center + d_camera))
 
@@ -171,6 +172,6 @@ class SliceInteractor(vtk.vtkInteractorStyleTrackballCamera):
             # Move slice backward
             self.SlicePlanes.current_slice = max(
                 self.SlicePlanes.current_slice - self.SlicePlanes.step,
-                self.SlicePlanes.slice_min + self.SlicePlanes.thickness)
+                self.SlicePlanes.slice_min - self.SlicePlanes.thickness)
             self.SlicePlanes.set_cropping_planes()
         self.instance.render_all()

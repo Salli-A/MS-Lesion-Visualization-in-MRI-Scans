@@ -1,5 +1,18 @@
 
 
+- Change step as well, not only slice thickness
+
+Needs a way to change opacity/transfer function manually in the app - perhaps best to create a control panel and submission panel seperatly.
+Control panel: 
+    views (saggital, axial, coronal),
+    modes: (volume slice, 2d slice, full volume),
+    information on controls (shift+scroll = zoom, scroll = go though slices, etc.),
+    transfer functions, 
+    activate segmentations (automatic or premade masks?),
+    
+
+A automatic intitial opacity - based on histogram? (pehaps could be good to do on per slice basis?)
+
 
 The swi / phase seem to not be 100% registered to align. The SWI/pahse have different coordinate systems/orientation and when rotated and sliced it does not seem to match 100%.
 -Could be due to size mismatch + slicing? maybe possible to create a function to inflate swi/phase to match?
@@ -45,17 +58,4 @@ Where it move the object to the global center, rotates and moves it back. But it
 
 
 
-
-
-
-Needs a way to change opacity/transfer function manually in the app - perhaps best to create a control panel and submission panel seperatly.
-Control panel: 
-    views (saggital, axial, coronal),
-    modes: (volume slice, 2d slice, full volume),
-    information on controls (shift+scroll = zoom, scroll = go though slices, etc.),
-    transfer functions, 
-    activate segmentations (automatic or premade masks?),
-    
-
-A automatic intitial opacity - based on histogram? (pehaps could be good to do on per slice basis?)
 
