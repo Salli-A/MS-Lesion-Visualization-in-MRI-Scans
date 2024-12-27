@@ -59,27 +59,15 @@ class Ui(QtWidgets.QMainWindow):
           # Indivual rendering code for modalities
           # (Can be combined into one function if it takes into account the transfer function and stuff)
          
-          """
-          # Entire volume
-          self.t1_window = t1_renderWindow(self,filename[0])
-          self.flair_window = flair_renderWindow(self,filename[1])
-          self.swi_window = swi_renderWindow(self,filename[2])
-          self.phase_window = phase_renderWindow(self,filename[3])
-          """
-          """
-          # 2d slices
-          self.t1_window = t1_renderPlane(self,filename[0])
-          self.flair_window = flair_renderPlane(self,filename[1])
-          self.swi_window = swi_renderPlane(self,filename[2])
-          self.phase_window = phase_renderPlane(self,filename[3])
-          """
 
-          # Testing with volume slices
+          # Volume slices
           self.t1_window, self.t1_iren = renderPlaneVolume(self, frame=self.t1_frame, layout=self.t1_layout, filename=filename[0])
           self.flair_window, self.flair_iren = renderPlaneVolume(self, frame=self.flair_frame, layout=self.flair_layout, filename=filename[1])
           self.swi_window, self.swi_iren = renderPlaneVolume(self, frame=self.swi_frame, layout=self.swi_layout, filename=filename[2])
           self.phase_window, self.phase_iren = renderPlaneVolume(self, frame=self.phase_frame, layout=self.phase_layout, filename=filename[3])
 
+          # Initate the slice planes
+          self.SlicePlanes.initPlanes()
           
           interactor_t1 = SliceInteractor(self)
           interactor_flair = SliceInteractor(self)
@@ -147,7 +135,7 @@ class Ui(QtWidgets.QMainWindow):
           
           print("Submitted")
 
-          bad_quality = self.badquality_checkbox.isChecked()
+          bad_quality = self.quality_checkbox.isChecked()
           prl = self.prl_checkbox.isChecked()
           cvs = self.cvs_checkbox.isChecked()
 
@@ -160,7 +148,7 @@ class Ui(QtWidgets.QMainWindow):
 
           # Reset states
           self.text_field.clear()
-          self.badquality_checkbox.setCheckState(False)
+          self.quality_checkbox.setCheckState(False)
           self.prl_checkbox.setCheckState(False)
           self.cvs_checkbox.setCheckState(False)
           self.reset_view()
