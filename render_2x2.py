@@ -24,6 +24,7 @@ file_flair = r'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_flair.nii.g
 file_swi = r'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiMag.nii.gz'
 file_phase = r'SUB_AXX\SUB_AXX\ses-20180322\sub-AXXX123_ses-20180322_swiPhase.nii.gz'
 
+
 files = [file_t1, file_flair, file_swi, file_phase]
 
 
