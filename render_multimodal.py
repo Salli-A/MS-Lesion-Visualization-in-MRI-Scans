@@ -15,7 +15,7 @@ from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage
 
 from slice_interactor import SlicePlanes
 
-def renderPlaneVolume(self, frame, layout, filename, show_bounds=True):
+def renderPlaneVolume(self, frame, layout, filename, show_bounds=True, swi_phase_modality = False):
     """
     Render a volume using the SliceInteractor to allow interactive slicing.
 
@@ -39,9 +39,9 @@ def renderPlaneVolume(self, frame, layout, filename, show_bounds=True):
     reader.SetFileName(filename)
     reader.Update()
     
-
     # Compute volume center and slice bounds
     bounds = reader.GetOutput().GetBounds()
+
 
     # Configure the volume mapper
     mapper = vtk.vtkGPUVolumeRayCastMapper()
@@ -69,6 +69,19 @@ def renderPlaneVolume(self, frame, layout, filename, show_bounds=True):
     volume = vtk.vtkVolume()
     volume.SetMapper(mapper)
     volume.SetProperty(volume_property)
+
+    # rotate the volume for SWI / phase modality
+    # When rotating using this code it rotates the plane as well...
+    if swi_phase_modality:        
+        x_min, x_max, y_min, y_max, z_min, z_max = bounds
+        x_center, y_center, z_center = (x_min + x_max) / 2, (y_min + y_max) / 2, (z_min + z_max) / 2
+        
+        transform = vtk.vtkTransform()
+        transform.Translate(x_center, y_center, z_center)
+        transform.RotateZ(-90)
+        transform.RotateY(90)
+        transform.Translate(-x_center, -y_center, -z_center)
+        volume.SetUserTransform(transform)
 
     # Configure the renderer
     renderer = vtk.vtkRenderer()

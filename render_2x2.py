@@ -4,8 +4,7 @@ import sys
 import pyvista as pv
 
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import (QMainWindow, QPushButton, QVBoxLayout, QFrame,
-    QApplication, QCheckBox, QLineEdit, QDesktopWidget, QSlider, QButtonGroup)
+from PyQt5.QtWidgets import (QDesktopWidget, QButtonGroup)
 from PyQt5.QtCore import QTimer
 
 
@@ -62,10 +61,12 @@ class Ui(QtWidgets.QMainWindow):
          
 
           # Volume slices
+
           self.t1_window, self.t1_iren = renderPlaneVolume(self, frame=self.t1_frame, layout=self.t1_layout, filename=filename[0])
           self.flair_window, self.flair_iren = renderPlaneVolume(self, frame=self.flair_frame, layout=self.flair_layout, filename=filename[1])
-          self.swi_window, self.swi_iren = renderPlaneVolume(self, frame=self.swi_frame, layout=self.swi_layout, filename=filename[2])
-          self.phase_window, self.phase_iren = renderPlaneVolume(self, frame=self.phase_frame, layout=self.phase_layout, filename=filename[3])
+          # Applying the transoftrmation for SWI / phase applies i tto the croppingplane as well - skip for now.
+          self.swi_window, self.swi_iren = renderPlaneVolume(self, frame=self.swi_frame, layout=self.swi_layout, filename=filename[2], swi_phase_modality=False)
+          self.phase_window, self.phase_iren = renderPlaneVolume(self, frame=self.phase_frame, layout=self.phase_layout, filename=filename[3], swi_phase_modality=False)
 
           # Initate the slice planes
           self.SlicePlanes.initPlanes()
