@@ -1,24 +1,22 @@
 import vtk
 
-class SliceInteractor(vtk.vtkInteractorStyleTrackballCamera):
-    def __init__(self, slice_thickness, slice_direction):
-        """
-        Initialize the SliceInteractor with the ability to slice in X, Y, or Z direction.
-        :param slice_thickness: Thickness of each slice in global coordinates
-        :param slice_direction: Direction of slicing ('x', 'y', 'z')
+
+class SlicePlanes(vtk.vtkPlanes):
+    """
+    Initilize slice planes across modalities for 'sync' rendering.
+    Keeps track of the slice planes for each modality and is updated via SliceInteractor.
+    """    
+    def __init__(self, slice_thickness = 12, slice_direction = 'z', zoom_factor = 1.1):
+        """ 
+        Initlize the slice planes, direction, thickness and zoom factor.
         """
         super().__init__()
-        self.AddObserver("MouseWheelForwardEvent", self.on_scroll_forward)
-        self.AddObserver("MouseWheelBackwardEvent", self.on_scroll_backward)
 
         self.slice_thickness = slice_thickness
-        self.slice_direction = slice_direction.lower()
-        self.windows = []  # Store renderer, mapper, and bounds for multiple windows
-        self.zoom_factor = 1.1  # Adjust for zoom speed
+        self.slice_direction = slice_direction.lower() # replace with 'axial', 'coronal', 'sagittal'
+        self.zoom_factor = zoom_factor
 
-        # Validate slice direction
-        if self.slice_direction not in ('x', 'y', 'z'):
-            raise ValueError("slice_direction must be 'x', 'y', or 'z'")
+        self.windows = []
 
     def addWindow(self, mapper, renderer, bounds):
         """
@@ -55,64 +53,81 @@ class SliceInteractor(vtk.vtkInteractorStyleTrackballCamera):
         })
 
         # Set initial cropping planes
-        self.set_cropping_planes(len(self.windows) - 1)
+        self.set_cropping_planes()
+    
+    def set_cropping_planes(self):
+        """Set the cropping planes based on the current slice and direction for all windows."""
 
+        for window in self.windows:
+            mapper = window['mapper']
+            current_slice = window['current_slice']
+            other_axes = window['other_axes']
+
+            if self.slice_direction == 'x':
+                mapper.SetCroppingRegionPlanes(
+                    current_slice, current_slice + self.slice_thickness,
+                    other_axes[0], other_axes[1],
+                    other_axes[2], other_axes[3]
+                )
+            elif self.slice_direction == 'y':
+                mapper.SetCroppingRegionPlanes(
+                    other_axes[0], other_axes[1],
+                    current_slice, current_slice + self.slice_thickness,
+                    other_axes[2], other_axes[3]
+                )
+            elif self.slice_direction == 'z':
+                mapper.SetCroppingRegionPlanes(
+                    other_axes[0], other_axes[1],
+                    other_axes[2], other_axes[3],
+                    current_slice, current_slice + self.slice_thickness
+                )
+
+
+        
+
+class SliceInteractor(vtk.vtkInteractorStyleTrackballCamera):
+    def __init__(self, instance):
+        """
+        Initialize the SliceInteractor to interact with SlicePlane.
+        """
+        super().__init__()
+        self.AddObserver("MouseWheelForwardEvent", self.on_scroll_forward)
+        self.AddObserver("MouseWheelBackwardEvent", self.on_scroll_backward)
+        self.instance = instance
+        self.SlicePlane = instance.SlicePlanes
+        
+
+        
     def is_shift_pressed(self):
         """Check if Shift is pressed."""
         return self.GetInteractor().GetShiftKey()
 
-    def set_cropping_planes(self, window_index):
-        """Set the cropping planes based on the current slice and direction for a specific window."""
-        window = self.windows[window_index]
-        mapper = window['mapper']
-        current_slice = window['current_slice']
-        other_axes = window['other_axes']
-
-        if self.slice_direction == 'x':
-            mapper.SetCroppingRegionPlanes(
-                current_slice, current_slice + self.slice_thickness,
-                other_axes[0], other_axes[1],
-                other_axes[2], other_axes[3]
-            )
-        elif self.slice_direction == 'y':
-            mapper.SetCroppingRegionPlanes(
-                other_axes[0], other_axes[1],
-                current_slice, current_slice + self.slice_thickness,
-                other_axes[2], other_axes[3]
-            )
-        elif self.slice_direction == 'z':
-            mapper.SetCroppingRegionPlanes(
-                other_axes[0], other_axes[1],
-                other_axes[2], other_axes[3],
-                current_slice, current_slice + self.slice_thickness
-            )
 
     def on_scroll_forward(self, obj, event):
-        for i, window in enumerate(self.windows):
-            if self.is_shift_pressed():
-                # Zoom in
-                camera = window['renderer'].GetActiveCamera()
-                camera.Zoom(self.zoom_factor)
-            else:
+        if self.is_shift_pressed():
+            # Zoom in
+            self.instance.camera.Zoom(self.SlicePlane.zoom_factor)
+        else:
+            for window in self.SlicePlane.windows:
                 # Move slice forward
                 window['current_slice'] = min(
                     window['current_slice'] + window['step'],
-                    window['slice_max'] - self.slice_thickness
+                    window['slice_max'] - self.SlicePlane.slice_thickness
                 )
-                self.set_cropping_planes(i)
+                self.SlicePlane.set_cropping_planes()
             window['renderer'].GetRenderWindow().Render()
 
     def on_scroll_backward(self, obj, event):
-        for i, window in enumerate(self.windows):
-            if self.is_shift_pressed():
-                # Zoom out
-                camera = window['renderer'].GetActiveCamera()
-                camera.Zoom(1 / self.zoom_factor)
-            else:
+        
+        if self.is_shift_pressed():
+            # Zoom out
+            self.instance.camera.Zoom(1 / self.SlicePlane.zoom_factor)
+        else:
+            for window in self.SlicePlane.windows:
                 # Move slice backward
                 window['current_slice'] = max(
                     window['current_slice'] - window['step'],
                     window['slice_min']
                 )
-                self.set_cropping_planes(i)
+                self.SlicePlane.set_cropping_planes()
             window['renderer'].GetRenderWindow().Render()

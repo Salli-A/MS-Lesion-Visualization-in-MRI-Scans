@@ -11,7 +11,7 @@ from PyQt5.QtCore import QTimer
 
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
-from slice_interactor import SliceInteractor
+from slice_interactor import SliceInteractor, SlicePlanes
 
 from render_multimodal import renderPlaneVolume
 
@@ -53,6 +53,7 @@ class Ui(QtWidgets.QMainWindow):
           
           # One camera for all modalities
           self.setup_camera()
+          self.SlicePlanes = SlicePlanes()
 
           # Indivual rendering code for modalities
           # (Can be combined into one function if it takes into account the transfer function and stuff)
@@ -71,7 +72,6 @@ class Ui(QtWidgets.QMainWindow):
           self.swi_window = swi_renderPlane(self,filename[2])
           self.phase_window = phase_renderPlane(self,filename[3])
           """
-          self.interactor = SliceInteractor(slice_thickness=13, slice_direction = 'z')
 
           # Testing with volume slices
           self.t1_window, self.t1_iren = renderPlaneVolume(self, frame=self.t1_frame, layout=self.t1_layout, filename=filename[0])
@@ -80,10 +80,16 @@ class Ui(QtWidgets.QMainWindow):
           self.phase_window, self.phase_iren = renderPlaneVolume(self, frame=self.phase_frame, layout=self.phase_layout, filename=filename[3])
 
           
-          self.t1_iren.SetInteractorStyle(self.interactor)
-          self.flair_iren.SetInteractorStyle(self.interactor)
-          self.swi_iren.SetInteractorStyle(self.interactor)
-          self.phase_iren.SetInteractorStyle(self.interactor)
+          interactor_t1 = SliceInteractor(self)
+          interactor_flair = SliceInteractor(self)
+          interactor_swi = SliceInteractor(self)
+          interactor_phase = SliceInteractor(self)
+
+
+          self.t1_iren.SetInteractorStyle(interactor_t1)
+          self.flair_iren.SetInteractorStyle(interactor_flair)
+          self.swi_iren.SetInteractorStyle(interactor_swi)
+          self.phase_iren.SetInteractorStyle(interactor_phase)
 
           self.t1_iren.Initialize()
           self.flair_iren.Initialize()
@@ -94,9 +100,6 @@ class Ui(QtWidgets.QMainWindow):
           self.flair_iren.Start()
           self.swi_iren.Start()
           self.phase_iren.Start()
-
-
-          
 
 
           

@@ -13,7 +13,7 @@ from PyQt5.QtCore import Qt
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage
 
-from slice_interactor import SliceInteractor
+from slice_interactor import SlicePlanes
 
 def renderPlaneVolume(self, frame, layout, filename, show_bounds=True):
     """
@@ -99,7 +99,7 @@ def renderPlaneVolume(self, frame, layout, filename, show_bounds=True):
 
     ren_window.AddRenderer(renderer)
 
-    self.interactor.addWindow(
+    self.SlicePlanes.addWindow(
         mapper=mapper,
         renderer=renderer,
         bounds = bounds
