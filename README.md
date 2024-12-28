@@ -12,6 +12,7 @@
 
 ## Needs to be done:
 
+- Fix the reading of image files.
 - Change camera view with coronal/axial (look into findBounds and setSLiceDirection on slice_interactor.py)
 - Fix rotations of swi and phase (not orientated in the same way as t1 and flair)
     - Applying userTransformations changes slicing plane rotation as well (causing a mix up between axial, coronal, sagittal between modalities - seen by putting true on swi_phase_modality in renderPlaneVolume),
