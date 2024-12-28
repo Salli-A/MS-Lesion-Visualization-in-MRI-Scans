@@ -12,7 +12,7 @@ from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from slice_interactor import SliceInteractor, SlicePlanes
 
-from render_multimodal import renderPlaneVolume
+from volume_multimodal import renderPlaneVolume
 
 # get data path from the first argument given
 #file = sys.argv[1]
