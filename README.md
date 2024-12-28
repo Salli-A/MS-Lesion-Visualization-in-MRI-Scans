@@ -26,7 +26,7 @@
 - Needs animation (maybe the way the camera sync is done qualifies as an animation as it makes use of timers?)
     - Animation of lesions growth (needs the lesion mask development) 
 - Needs surface reconstruction (Perhaps of the the lesion mask?)
-- Fused visulization across modalities (merge swi/phase?)
+- Fused visulization across modalities (phase omdatlity with swi?) or add features derived from the scans (gradients or derivatives?)
 - Change step sice, currently always thickness/2 (seperate step size from setSliceThickness in slice_interactor.py)
 - Create stero to [CrystalEyes] - double check in the slides which stereo rendering method (just needds to be added with SetStereoTypeToCrystalEyes() and perhaps adding parameters for distance from screen etc.)
 - Add scan to file (eg. csv) instead of just printing
