@@ -131,7 +131,7 @@ class SlicePlanes(vtk.vtkPlanes):
 
         
 
-class SliceInteractor(vtk.vtkInteractorStyleImage): #vtkInteractorStyleTrackballCamera):
+class SliceInteractor(vtk.vtkInteractorStyleTrackballCamera):
     def __init__(self, instance):
         """
         Initialize the SliceInteractor to interact with SlicePlane.
