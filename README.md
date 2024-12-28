@@ -1,5 +1,14 @@
 # MS-Lesion-Visualization-in-MRI-Scans
 
+## Project should include
+- 3D visualization
+- surface reconstruction and rendering methods
+- volume rendering methods
+- interaction methods
+- fused visualization of different modalities or features
+- stereo rendering
+- animation
+- a GUI for the application
 
 ## Needs to be done:
 
@@ -14,7 +23,10 @@
     - Seperate transfer functions for each modality
     - Automatic based on histogram? Adjustable (pehaps could be good to do on per slice basis?)?
 - Needs animation (maybe the way the camera sync is done qualifies as an animation as it makes use of timers?)
+    - Animation of lesions growth (needs the lesion mask development) 
+- Needs surface reconstruction (Perhaps of the the lesion mask?)
 - Add lesion segmentation mask
+- Fused visulization across modalities (merge swi/phase?)
 - Change step sice, currently always thickness/2 (seperate step size from setSliceThickness in slice_interactor.py)
 - Create stero to [CrystalEyes] - double check in the slides which stereo rendering method (just needds to be added with SetStereoTypeToCrystalEyes() and perhaps adding parameters for distance from screen etc.)
 - Add scan to file (eg. csv) instead of just printing
