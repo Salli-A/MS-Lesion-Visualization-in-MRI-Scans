@@ -196,9 +196,9 @@ class Ui(QtWidgets.QMainWindow):
      def change_slicing(self):
           
           if self.axial_button.isChecked():
-               self.SlicePlanes.setSliceDirection('x')
-          if self.coronal_button.isChecked():
                self.SlicePlanes.setSliceDirection('y')
+          if self.coronal_button.isChecked():
+               self.SlicePlanes.setSliceDirection('x')
           if self.sagittal_button.isChecked():
                self.SlicePlanes.setSliceDirection('z')
 
