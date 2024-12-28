@@ -16,6 +16,7 @@
 - Add lesion segmentation mask
 - Change step sice, currently always thickness/2 (seperate step size from setSliceThickness in slice_interactor.py)
 - Create stero to [CrystalEyes] - double check in the slides which stereo rendering method (just needds to be added with SetStereoTypeToCrystalEyes() and perhaps adding parameters for distance from screen etc.)
+- Add scan to file (eg. csv) instead of just printing
 
 Perhaps:
 - Change basic control scheme from vtkInteractorStyleTrackballCamera to not allow for rotation, only zoom and paning.
