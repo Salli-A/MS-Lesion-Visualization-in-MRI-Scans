@@ -49,10 +49,10 @@ class SlicePlanes(vtk.vtkPlanes):
             
         self.global_bounds = global_bounds
         
-        x_min, x_max, y_min, y_max, z_min, z_max = bounds
+        x_min, x_max, y_min, y_max, z_min, z_max = global_bounds
         x_center, y_center, z_center = (x_min + x_max) / 2, (y_min + y_max) / 2, (z_min + z_max) / 2
 
-        # Set camera parameters 
+        # Set camera parameters based on the combined bounds
         # Needs to be adjusted for slice direction
         d_camera = max(x_max - x_min, y_max - y_min, z_max - z_min) * 2
         self.instance.set_view(focalPoint=(x_center, y_center, z_center), position=(x_center, y_center, z_center + d_camera))
