@@ -15,7 +15,7 @@
     - Automatic based on histogram? Adjustable (pehaps could be good to do on per slice basis?)?
 - Needs animation (technically the way the camera sync is done is an animation as it makes use of timers?)
 - Add lesion segmentation mask
-- Change step sice, not only slice thickness (seperate step size from setSliceThickness in slice_interactor.py)
+- Change step sice, currently always thickness/2 (seperate step size from setSliceThickness in slice_interactor.py)
 - Create stero to [CrystalEyes] - double check in the slides which stereo rendering method (just needds to be added with SetStereoTypeToCrystalEyes() and perhaps adding parameters for distance from screen etc.)
 
 Perhaps:

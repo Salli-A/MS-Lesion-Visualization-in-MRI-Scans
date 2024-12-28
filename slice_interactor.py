@@ -20,13 +20,13 @@ class SlicePlanes(vtk.vtkPlanes):
 
         self.instance = instance
     
-    def initPlanes(self, slice_thickness = 10, slice_direction = 'z', zoom_factor = 1.1):
+    def initPlanes(self, slice_direction = 'z', zoom_factor = 1.1):
         """
         Initialize the slice planes with the thickness, direction, and zoom factor after all windows have been added via addWindow.
         """
         self.findBounds()
         self.setSliceDirection(slice_direction)
-        self.setSliceThickness(slice_thickness)
+        self.setSliceThickness(self.thickness)
         self.setSliceZoomFactor(zoom_factor)
 
     def findBounds(self):
