@@ -1,177 +1,165 @@
 import vtk
 
-class SlicePlanes(vtk.vtkPlanes):
-    """
-    Initilize slice planes across modalities for 'sync' rendering.
-    Keeps track of the slice planes for each modality and is updated via SliceInteractor.
-    """
-    def __init__(self, instance):
-        """ 
-        Initlize the slice planes, direction, thickness and zoom factor.
-        """
-        super().__init__()
-
-        self.windows = []
-
-        self.thickness = 10
-        self.step = self.thickness / 2 
-        self.direction = (4,5)
-        self.zoom_factor = 1.1
-
-        self.instance = instance
+class SlicePlanes:
+    """Controls synchronized slice planes across multiple MRI modalities."""
     
-    def initPlanes(self, slice_direction = 'z', zoom_factor = 1.1):
-        """
-        Initialize the slice planes with the thickness, direction, and zoom factor after all windows have been added via addWindow.
-        """
+    def __init__(self, instance):
+        self.windows = []
+        self.thickness = 10
+        self.step = self.thickness / 2
+        self.zoom_factor = 1.2
+        self.initial_zoom_factor= 0.6
+        self.instance = instance
+        self.slice_direction = 'y'
+        self.current_slice = None
+        self.global_bounds = None
+        
+    def initPlanes(self, slice_direction='y'):
+        """Initialize slice planes after windows are added."""
         self.findBounds()
         self.setSliceDirection(slice_direction)
         self.setSliceThickness(self.thickness)
-        self.setSliceZoomFactor(zoom_factor)
-
+        
     def findBounds(self):
-        """
-        Finds the lower and upper bounds of the data for all windows.
-        Takes the max and min of the bounds of all windows.
-        """
-
+        """Calculate global bounds across all windows."""
+        if not self.windows:
+            return
+            
+        # Get bounds from all windows
         bounds_list = [list(window['bounds']) for window in self.windows]
-
-        # Initialize global bounds with the first window's bounds
-        global_bounds = bounds_list[0]
-        for bounds in bounds_list[1:]:
-            global_bounds[0] = min(global_bounds[0], bounds[0])
-            global_bounds[1] = max(global_bounds[1], bounds[1])
-            global_bounds[2] = min(global_bounds[2], bounds[2])
-            global_bounds[3] = max(global_bounds[3], bounds[3])
-            global_bounds[4] = min(global_bounds[4], bounds[4])
-            global_bounds[5] = max(global_bounds[5], bounds[5])
+        
+        # Initialize with first window's bounds
+        self.global_bounds = list(bounds_list[0])
+        
+        # Find min/max across all windows
+        for i in range(0, 6, 2):  # Process x,y,z pairs
+            self.global_bounds[i] = min(bounds[i] for bounds in bounds_list)
+            self.global_bounds[i + 1] = max(bounds[i + 1] for bounds in bounds_list)
             
-        self.global_bounds = global_bounds
+        # Update camera center and distance
+        self._updateCameraPosition()
         
-        x_min, x_max, y_min, y_max, z_min, z_max = global_bounds
-        x_center, y_center, z_center = (x_min + x_max) / 2, (y_min + y_max) / 2, (z_min + z_max) / 2
-
-        # Set camera parameters based on the combined bounds
-        # Needs to be adjusted for slice direction
-        d_camera = max(x_max - x_min, y_max - y_min, z_max - z_min) * 2
-        self.instance.set_view(focalPoint=(x_center, y_center, z_center), position=(x_center, y_center, z_center + d_camera))
-
-    def setSliceDirection(self, direction):
-        """
-        Set the slicing direction.
-        """
-
-        # replace with 'axial', 'coronal', 'sagittal'
-        self.slice_direction = direction.lower()
-
-        if self.slice_direction == 'x':
-            self.direction_min = 0
-            self.direction_max = 1
-        elif self.slice_direction == 'y':
-            self.direction_min = 2
-            self.direction_max = 3
-        elif self.slice_direction == 'z':
-            self.direction_min = 4
-            self.direction_max = 5
+    def _updateCameraPosition(self):
+        """Update camera position based on current bounds with improved zoom."""
+        if not self.global_bounds:
+            return
+            
+        x_min, x_max, y_min, y_max, z_min, z_max = self.global_bounds
+        center = [(x_min + x_max) / 2, (y_min + y_max) / 2, (z_min + z_max) / 2]
         
-        self.findBounds()
+        # Calculate dimensions
+        dimensions = [
+            x_max - x_min,
+            y_max - y_min,
+            z_max - z_min
+        ]
         
-        self.slice_min, self.slice_max = self.global_bounds[self.direction_min], self.global_bounds[self.direction_max]
-        self.current_slice = self.slice_min + (self.slice_max - self.slice_min) / 2
-        self.croppingPlane = self.global_bounds
-
-        self.set_cropping_planes()
-
-    def setSliceThickness(self, thickness):
-        """
-        Set the thickness of each slice.
-        """
-        self.thickness = thickness
-        self.step = self.thickness / 2  
-        self.set_cropping_planes()
-
-    def setSliceZoomFactor(self, factor):
-        """
-        Set the zoom factor for the slice.
-        :param factor: The zoom factor for the slice.
-        """
-        self.zoom_factor = factor
+        # Calculate optimal camera distance based on volume size and view direction
+        direction_map = {'x': 0, 'y': 1, 'z': 2}
+        main_axis = direction_map[self.slice_direction]
         
-    
-    def set_cropping_planes(self):
-        """Set the cropping planes based on the current slice and direction for all windows."""
-
-        self.croppingPlane[self.direction_min], self.croppingPlane[self.direction_max] = self.current_slice, self.current_slice + self.thickness
-
+        # Get the two dimensions perpendicular to viewing direction
+        other_dims = [dim for i, dim in enumerate(dimensions) if i != main_axis]
+        max_dim = max(other_dims)
+        
+        # Calculate distance to fit the volume in view
+        # The factor 0.8 brings the volume closer to fill more of the view
+        distance = max_dim * 0.8
+        
+        # Set up camera positions based on view direction
+        camera_positions = {
+            'x': ([center[0] + distance, center[1], center[2]], (0, -1, 0)),  # Coronal
+            'y': ([center[0], center[1] + distance, center[2]], (0, 0, -1)),  # Axial
+            'z': ([center[0], center[1], center[2] + distance], (0, -1, 0))   # Sagittal
+        }
+        
+        position, view_up = camera_positions[self.slice_direction]
+        self.instance.set_view(viewUp=view_up, position=position, focalPoint=center)
+        
+        # Update all renderers to use parallel projection
         for window in self.windows:
-            mapper = window['mapper']
+            renderer = window['renderer']
+            camera = renderer.GetActiveCamera()
+            camera.ParallelProjectionOn()
             
-            mapper.SetCroppingRegionPlanes(
-                self.croppingPlane
-            )
-
+            # Set parallel scale to fit the view
+            # The factor 0.4 provides a good initial zoom level
+            camera.SetParallelScale(max_dim * self.initial_zoom_factor)
+        
+    def setSliceDirection(self, direction):
+        """Set slicing direction (x/y/z) and update view."""
+        self.slice_direction = direction.lower()
+        
+        # Map direction to bounds indices
+        direction_indices = {'x': (0, 1), 'y': (2, 3), 'z': (4, 5)}
+        self.direction_min, self.direction_max = direction_indices[self.slice_direction]
+        
+        # Initialize slice position if needed
+        if self.current_slice is None:
+            self.slice_min = self.global_bounds[self.direction_min]
+            self.slice_max = self.global_bounds[self.direction_max]
+            self.current_slice = self.slice_min + (self.slice_max - self.slice_min) / 2
+            
+        self._updateCameraPosition()
+        self._updateCroppingPlanes()
+        
+    def setSliceThickness(self, thickness):
+        """Update slice thickness and adjust view."""
+        self.thickness = thickness
+        self.step = thickness / 2
+        self._updateCroppingPlanes()
+        
+    def _updateCroppingPlanes(self):
+        """Update cropping planes for all windows."""
+        if not self.global_bounds:
+            return
+            
+        # Create cropping plane bounds
+        cropping_bounds = list(self.global_bounds)
+        cropping_bounds[self.direction_min] = self.current_slice
+        cropping_bounds[self.direction_max] = self.current_slice + self.thickness
+        
+        # Update all windows
+        for window in self.windows:
+            window['mapper'].SetCroppingRegionPlanes(cropping_bounds)
+            
     def addWindow(self, mapper, renderer, bounds):
-        """
-        Add a renderer, mapper, and bounds for interaction.
-        :param mapper: vtkMapper for rendering slices
-        :param renderer: vtkRenderer
-        :param bounds: Tuple specifying the data bounds (output of GetBounds())
-        """
-
-
-        # Add to the list of windows
+        """Add a new window for synchronized viewing."""
         self.windows.append({
             'mapper': mapper,
             'renderer': renderer,
             'bounds': bounds
         })
 
-
-
-        
-
 class SliceInteractor(vtk.vtkInteractorStyleTrackballCamera):
+    """Handles mouse interaction for slice navigation."""
+    
     def __init__(self, instance):
-        """
-        Initialize the SliceInteractor to interact with SlicePlane.
-        """
         super().__init__()
-        self.AddObserver("MouseWheelForwardEvent", self.on_scroll_forward)
-        self.AddObserver("MouseWheelBackwardEvent", self.on_scroll_backward)
+        self.AddObserver("MouseWheelForwardEvent", self.onScroll)
+        self.AddObserver("MouseWheelBackwardEvent", self.onScroll)
         self.instance = instance
-        self.SlicePlanes = instance.SlicePlanes
+        self.planes = instance.SlicePlanes
         
-
+    def onScroll(self, obj, event):
+        """Handle scroll events for slice navigation and zooming."""
+        is_forward = event == "MouseWheelForwardEvent"
+        is_shift = self.GetInteractor().GetShiftKey()
         
-    def is_shift_pressed(self):
-        """Check if Shift is pressed."""
-        return self.GetInteractor().GetShiftKey()
-
-
-    def on_scroll_forward(self, obj, event):
-        if self.is_shift_pressed():
-            # Zoom in
-            self.instance.camera.Zoom(self.SlicePlanes.zoom_factor)
+        if is_shift:
+            # Handle zooming
+            zoom = self.planes.zoom_factor if is_forward else 1 / self.planes.zoom_factor
+            self.instance.camera.Zoom(zoom)
         else:
-
-            # Move slice forward
-            self.SlicePlanes.current_slice = min(
-                self.SlicePlanes.current_slice + self.SlicePlanes.step,
-                self.SlicePlanes.slice_max - self.SlicePlanes.thickness)
-            self.SlicePlanes.set_cropping_planes()
-        self.instance.render_all()
-
-    def on_scroll_backward(self, obj, event):
-        
-        if self.is_shift_pressed():
-            # Zoom out
-            self.instance.camera.Zoom(1 / self.SlicePlanes.zoom_factor)
-        else:
-
-            # Move slice backward
-            self.SlicePlanes.current_slice = max(
-                self.SlicePlanes.current_slice - self.SlicePlanes.step,
-                self.SlicePlanes.slice_min - self.SlicePlanes.thickness)
-            self.SlicePlanes.set_cropping_planes()
+            # Handle slice movement
+            direction = 1 if is_forward else -1
+            step = self.planes.step * direction
+            
+            new_slice = self.planes.current_slice + step
+            min_slice = self.planes.slice_min - self.planes.thickness
+            max_slice = self.planes.slice_max - self.planes.thickness
+            
+            self.planes.current_slice = max(min_slice, min(new_slice, max_slice))
+            self.planes._updateCroppingPlanes()
+            
         self.instance.render_all()
