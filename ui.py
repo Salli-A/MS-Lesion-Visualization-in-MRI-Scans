@@ -405,18 +405,18 @@ class MainWindowUI(QMainWindow):
         layout.addStretch()
         self.main_layout.addWidget(control_panel)
 
-    def create_shared_volume_controls(self):
+    def createShaderPanel(self):
         """
         Creates a single QGroupBox with the Ambient, Diffuse,
         Specular, and Specular Power sliders for volume rendering.
         These are shared across all modalities.
         """
-        group_box = self.create_group_box("Volume Rendering (Shared)")
+        group_box = self.create_group_box("Volume Shading")
 
         layout = QVBoxLayout(group_box)
         layout.setSpacing(8)
 
-        # ============= Ambient =============
+        # Ambient
         ambient_layout = QHBoxLayout()
         ambient_label = QLabel("Ambient:")
         ambient_label.setStyleSheet("color: white; font-size: 11pt;")
@@ -444,7 +444,7 @@ class MainWindowUI(QMainWindow):
         ambient_layout.addWidget(self.ambient_slider)
         layout.addLayout(ambient_layout)
 
-        # ============= Diffuse =============
+        # Diffuse
         diffuse_layout = QHBoxLayout()
         diffuse_label = QLabel("Diffuse:")
         diffuse_label.setStyleSheet("color: white; font-size: 11pt;")
@@ -472,7 +472,7 @@ class MainWindowUI(QMainWindow):
         diffuse_layout.addWidget(self.diffuse_slider)
         layout.addLayout(diffuse_layout)
 
-        # ============= Specular =============
+        # Specular
         specular_layout = QHBoxLayout()
         specular_label = QLabel("Specular:")
         specular_label.setStyleSheet("color: white; font-size: 11pt;")
@@ -500,7 +500,7 @@ class MainWindowUI(QMainWindow):
         specular_layout.addWidget(self.specular_slider)
         layout.addLayout(specular_layout)
 
-        # ============= Specular Power =============
+        # Specular Power
         spec_power_layout = QHBoxLayout()
         spec_power_label = QLabel("Spec. Power:")
         spec_power_label.setStyleSheet("color: white; font-size: 11pt;")
@@ -528,11 +528,31 @@ class MainWindowUI(QMainWindow):
         spec_power_layout.addWidget(self.spec_power_slider)
         layout.addLayout(spec_power_layout)
 
+        reset_shader_layout = QHBoxLayout()
+        self.reset_shader_button = QPushButton("Reset")
+        # Optional styling for the button
+        self.reset_shader_button.setStyleSheet("""
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                font-size: 11pt;
+                border: 1px solid #707070;
+                border-radius: 4px;
+                padding: 4px 8px;
+            }
+            QPushButton:hover {
+                background-color: #505050;
+            }
+        """)
+        reset_shader_layout.addStretch()  # Push button to the right
+        reset_shader_layout.addWidget(self.reset_shader_button)
+        layout.addLayout(reset_shader_layout)
         
         self.ambient_slider.valueChanged.connect(self.update_volume_lighting)
         self.diffuse_slider.valueChanged.connect(self.update_volume_lighting)
         self.specular_slider.valueChanged.connect(self.update_volume_lighting)
         self.spec_power_slider.valueChanged.connect(self.update_volume_lighting)
+        self.reset_shader_button.clicked.connect(self.reset_shading)
 
 
         return group_box
@@ -601,7 +621,7 @@ class MainWindowUI(QMainWindow):
         self.main_layout.addWidget(render_panel, stretch=1)
 
         # Create a single group box with the volume rendering controls
-        shared_controls_box = self.create_shared_volume_controls()
+        shared_controls_box = self.createShaderPanel()
         # Make it span all columns in a new row "2" (beneath the 2×2 grid)
         grid_layout.addWidget(shared_controls_box, 2, 0, 1, 2)
 

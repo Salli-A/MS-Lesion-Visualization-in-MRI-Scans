@@ -345,6 +345,22 @@ class MRIViewer(MainWindowUI):
                     volume_property.SetSpecular(specular)
                     volume_property.SetSpecularPower(spec_pow)
           self.render_all()
+     
+     def reset_shading(self):
+          for volume in [self.t1_volume, self.flair_volume, self.swi_volume, self.phase_volume]:
+               volume_property =volume.GetProperty()
+               if volume_property:
+                    self.ambient_slider.setValue(40)
+                    self.diffuse_slider.setValue(60)
+                    self.specular_slider.setValue(20)
+                    self.spec_power_slider.setValue(10)
+
+                    volume_property.SetAmbient(0.4)
+                    volume_property.SetDiffuse(0.6)
+                    volume_property.SetSpecular(0.2)
+                    volume_property.SetSpecularPower(0.1)
+                    
+          self.render_all()
 
      def submit(self):
         """Handle form submission"""
