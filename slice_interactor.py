@@ -106,8 +106,14 @@ class SlicePlanes:
     def setSliceThickness(self, thickness):
         """Update slice thickness and adjust view."""
         self.thickness = thickness
-        self.step = thickness / 2
         self._updateCroppingPlanes()
+
+        
+    def setStepSize(self, step_size):
+        """Update step size adjust view."""
+        self.step = step_size
+        self._updateCroppingPlanes()
+        
         
     def _updateCroppingPlanes(self):
         """Update cropping planes for all windows."""

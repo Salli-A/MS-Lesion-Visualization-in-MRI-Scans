@@ -167,6 +167,9 @@ class MRIViewer(MainWindowUI):
         # Connect thickness controls
         self.thickness_slider.valueChanged.connect(self.update_thickness)
 
+        # Conncct step size controls
+        self.step_slider.valueChanged.connect(self.update_stepsize)
+
         # Set axial view as default
         self.axial_button.setChecked(True)
         
@@ -323,6 +326,12 @@ class MRIViewer(MainWindowUI):
         """Update slice thickness"""
         thickness = self.thickness_slider.value()
         self.SlicePlanes.setSliceThickness(thickness)
+
+        
+    def update_stepsize(self):
+        """Update slice thickness"""
+        step_size = self.step_slider.value()
+        self.SlicePlanes.setStepSize(step_size)
 
     def submit(self):
         """Handle form submission"""
