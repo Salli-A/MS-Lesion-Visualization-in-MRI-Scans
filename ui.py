@@ -603,12 +603,6 @@ class MainWindowUI(QMainWindow):
         shading_grid.addWidget(self.createModalityShaderPanel("flair"), 1, 0)
         shading_grid.addWidget(self.createModalityShaderPanel("phase"), 1, 1)
 
-        # Optionally set stretch if you want them to resize in certain proportions
-        # shading_grid.setColumnStretch(0, 1)
-        # shading_grid.setColumnStretch(1, 1)
-        # shading_grid.setRowStretch(0, 1)
-        # shading_grid.setRowStretch(1, 1)
-
         # Add both grids to the main vertical layout
         vlayout.addLayout(view_grid)
         vlayout.addLayout(shading_grid)
