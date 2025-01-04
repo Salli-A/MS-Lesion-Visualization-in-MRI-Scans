@@ -19,7 +19,6 @@
     - Animation of lesions growth (needs the lesion mask development)
 - Needs surface reconstruction (Perhaps of the the lesion mask?)
 - Fused visulization across modalities (phase omdatlity with swi?) or add features derived from the scans (gradients or derivatives?)
-- Create stero to [CrystalEyes] - double check in the slides which stereo rendering method (just needds to be added with SetStereoTypeToCrystalEyes() and perhaps adding parameters for distance from screen etc.)
 - Add scan to file (eg. csv) instead of just printing
 
 Perhaps:

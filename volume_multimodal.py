@@ -30,7 +30,7 @@ class VolumeRenderer:
                 
     def _setup_vtk_widget(self):
         """Create and set up VTK widget in Qt frame."""
-        self.vtk_widget = QVTKRenderWindowInteractor(self.frame)
+        self.vtk_widget = QVTKRenderWindowInteractor(self.frame, stereo=1)
         self.layout.addWidget(self.vtk_widget)
         
         self.renderer = vtk.vtkRenderer()
@@ -38,7 +38,12 @@ class VolumeRenderer:
         
         self.window = self.vtk_widget.GetRenderWindow()
         self.window.AddRenderer(self.renderer)
-        
+
+        # Enable stereo rendering - May need fine tuning for distance 
+        self.window.SetStereoCapableWindow(True)
+        self.window.SetStereoTypeToCrystalEyes()
+        self.window.StereoRenderOn()
+            
         self.interactor = self.window.GetInteractor()
         
     def _create_pipeline(self):
