@@ -103,7 +103,7 @@ class VolumeRenderer:
         mapper.SetCroppingRegionFlags(vtk.VTK_CROP_SUBVOLUME)
         return mapper
         
-    def _setup_volume_property(self, modality=None):
+    def _setup_volume_property(self):
         """
         Configure volume rendering properties based on modality.
         
@@ -114,7 +114,7 @@ class VolumeRenderer:
         color_tf = vtk.vtkColorTransferFunction()
         opacity_tf = vtk.vtkPiecewiseFunction()
         
-        if modality == 't1':
+        if self.modality == 't1':
             # T1-weighted setup
             # CSF and lesions (dark) to white matter (bright)
             color_tf.AddRGBPoint(0, 0, 0, 0)      # Black
@@ -129,7 +129,7 @@ class VolumeRenderer:
             opacity_tf.AddPoint(1500, 0.25) # Slightly less for white matter
             opacity_tf.AddPoint(2000, 0.2)  # Reduced for very bright regions
             
-        elif modality == 'flair':
+        elif self.modality == 'flair':
             # FLAIR setup
             # Emphasis on lesions while suppressing CSF
             color_tf.AddRGBPoint(0, 0, 0, 0)      # Black (CSF)
@@ -142,7 +142,7 @@ class VolumeRenderer:
             opacity_tf.AddPoint(1500, 0.3)  # More opaque
             opacity_tf.AddPoint(2000, 0.4)  # Most opaque for lesions
             
-        elif modality == 'swi_mag':
+        elif self.modality == 'swi_mag':
             # SWI Magnitude setup
             # High contrast for veins and microbleeds
             color_tf.AddRGBPoint(0, 0, 0, 0)      # Black (veins)
@@ -155,7 +155,7 @@ class VolumeRenderer:
             opacity_tf.AddPoint(1000, 0.2)  # Semi-transparent tissue
             opacity_tf.AddPoint(1500, 0.1)  # Most transparent for bright tissue
             
-        elif modality == 'swi_phase':
+        elif self.modality == 'swi_phase':
             # SWI Phase setup
             # Bidirectional contrast for phase information
             color_tf.AddRGBPoint(-4096, 0, 0, 1)    # Blue (negative phase)
@@ -170,12 +170,6 @@ class VolumeRenderer:
             opacity_tf.AddPoint(2048, 0.2)
             opacity_tf.AddPoint(4096, 0.3)
         
-        else:
-            # Default fallback
-            color_tf.AddRGBPoint(0, 0, 0, 0)
-            color_tf.AddRGBPoint(512, 1, 1, 1)
-            opacity_tf.AddPoint(0, 0)
-            opacity_tf.AddPoint(256, 0.15)
         
         # Create and configure volume property
         volume_property = vtk.vtkVolumeProperty()
