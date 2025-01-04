@@ -12,7 +12,7 @@ from volume_multimodal import renderPlaneVolume
 from ui import MainWindowUI
 
 class MRIViewer(MainWindowUI):
-     def __init__(self, base_path):
+    def __init__(self, base_path):
         super().__init__()
         
         # Set up camera FIRST
@@ -34,7 +34,7 @@ class MRIViewer(MainWindowUI):
         
         self.show()
     
-     def find_image_files(self, session_path):
+    def find_image_files(self, session_path):
         """
         Find image files for specified modalities in a session directory.
         Prioritizes 'Lreg_' prefixed files over 'CSreg_' files.
@@ -70,7 +70,7 @@ class MRIViewer(MainWindowUI):
                 
         return found_files
 
-     def setup_file_paths(self, base_path):
+    def setup_file_paths(self, base_path):
         """
         Set up file paths based on the provided base directory.
         Looks for registered files with 'Lreg_' prefix.
@@ -106,7 +106,7 @@ class MRIViewer(MainWindowUI):
         except Exception as e:
             raise ValueError(f"Error setting up file paths: {str(e)}")
 
-     def load_session(self, index):
+    def load_session(self, index):
         """Load a specific session by index"""
         try:
             session_dir = self.session_dirs[index]
@@ -141,7 +141,7 @@ class MRIViewer(MainWindowUI):
         except Exception as e:
             raise ValueError(f"Error loading session: {str(e)}")
 
-     def initializeUI(self):
+    def initializeUI(self):
         """Initialize UI components and connect signals"""
         # Get subject ID from base directory name
         subject_id = os.path.basename(os.path.dirname(os.path.dirname(self.files[0])))
@@ -173,26 +173,26 @@ class MRIViewer(MainWindowUI):
         # Set axial view as default
         self.axial_button.setChecked(True)
         
-     def next_session(self):
+    def next_session(self):
         """Load next session if available"""
         if self.current_session_index < len(self.session_dirs) - 1:
             self.load_session(self.current_session_index + 1)
 
-     def previous_session(self):
+    def previous_session(self):
         """Load previous session if available"""
         if self.current_session_index > 0:
             self.load_session(self.current_session_index - 1)
 
-     def update_session_display(self):
+    def update_session_display(self):
         """Update UI elements with current session info"""
         self.session_id.setText(self.current_session)
 
-     def update_navigation_buttons(self):
+    def update_navigation_buttons(self):
         """Update the enabled state of navigation buttons"""
         self.prev_button.setEnabled(self.current_session_index > 0)
         self.next_button.setEnabled(self.current_session_index < len(self.session_dirs) - 1)
 
-     def render_modalities(self, filenames):
+    def render_modalities(self, filenames):
           """Render all modalities"""
           try:
                # Set up the slice planes
@@ -234,13 +234,13 @@ class MRIViewer(MainWindowUI):
                print(f"Error in render_modalities: {str(e)}")
                raise
     
-     def render_all(self):
+    def render_all(self):
         """Force rendering for camera sync"""
         for window in [self.t1_window, self.flair_window, self.swi_window, self.phase_window]:
             if window:  # Check if window exists before rendering
                 window.Render()
     
-     def setup_camera(self):
+    def setup_camera(self):
         """Initialize camera settings"""
         self.camera = vtk.vtkCamera()
         viewUp = (0., -1., 0)
@@ -248,7 +248,7 @@ class MRIViewer(MainWindowUI):
         focalPoint = (100, 100, 100)
         self.set_view(viewUp, position, focalPoint)
     
-     def set_view(self, viewUp=None, position=None, focalPoint=None):
+    def set_view(self, viewUp=None, position=None, focalPoint=None):
         """Set camera view parameters"""
         if viewUp is not None:
             self.camera_viewUp = viewUp
@@ -258,13 +258,13 @@ class MRIViewer(MainWindowUI):
             self.camera_focalPoint = focalPoint
         self.reset_view()
     
-     def reset_view(self):
+    def reset_view(self):
         """Reset camera to initial view"""
         self.camera.SetViewUp(self.camera_viewUp)
         self.camera.SetPosition(self.camera_position)
         self.camera.SetFocalPoint(self.camera_focalPoint)
 
-     def change_slicing(self):
+    def change_slicing(self):
         """Handle slice direction changes"""
         if not hasattr(self.SlicePlanes, 'global_bounds') or not self.SlicePlanes.global_bounds:
             return
@@ -321,48 +321,72 @@ class MRIViewer(MainWindowUI):
         # Force render update
         self.render_all()
 
-     def update_thickness(self):
+    def update_thickness(self):
         """Update slice thickness"""
         thickness = self.thickness_slider.value()
         self.SlicePlanes.setSliceThickness(thickness)
       
-     def update_stepsize(self):
+    def update_stepsize(self):
         """Update slice thickness"""
         step_size = self.step_slider.value()
         self.SlicePlanes.setStepSize(step_size)
+    
+    def update_volume_lighting(self, modality_name):
+        """
+        Called whenever a lighting slider changes for a given modality.
+        We retrieve that modality's volume, get its property,
+        then read the slider values from self.shader_sliders[modality_name].
+        """
+        volume = getattr(self, f"{modality_name}_volume", None)
 
-     def update_volume_lighting(self):
-          for volume in [self.t1_volume, self.flair_volume, self.swi_volume, self.phase_volume]:
-               volume_property =volume.GetProperty()
-               if volume_property:
-                    ambient  = self.ambient_slider.value()   / 100.0
-                    diffuse  = self.diffuse_slider.value()   / 100.0
-                    specular = self.specular_slider.value()  / 100.0
-                    spec_pow = float(self.spec_power_slider.value())
+        volume_property = volume.GetProperty()
 
-                    volume_property.SetAmbient(ambient)
-                    volume_property.SetDiffuse(diffuse)
-                    volume_property.SetSpecular(specular)
-                    volume_property.SetSpecularPower(spec_pow)
-          self.render_all()
-     
-     def reset_shading(self):
-          for volume in [self.t1_volume, self.flair_volume, self.swi_volume, self.phase_volume]:
-               volume_property =volume.GetProperty()
-               if volume_property:
-                    self.ambient_slider.setValue(40)
-                    self.diffuse_slider.setValue(60)
-                    self.specular_slider.setValue(20)
-                    self.spec_power_slider.setValue(10)
+        ambient_slider  = self.shader_sliders[modality_name]["ambient"]
+        diffuse_slider  = self.shader_sliders[modality_name]["diffuse"]
+        specular_slider = self.shader_sliders[modality_name]["specular"]
+        spec_power_slider = self.shader_sliders[modality_name]["spec_power"]
 
-                    volume_property.SetAmbient(0.4)
-                    volume_property.SetDiffuse(0.6)
-                    volume_property.SetSpecular(0.2)
-                    volume_property.SetSpecularPower(0.1)
-                    
-          self.render_all()
+        ambient_val  = ambient_slider.value() / 100.0
+        diffuse_val  = diffuse_slider.value() / 100.0
+        specular_val = specular_slider.value() / 100.0
+        spec_pow_val = float(spec_power_slider.value())
 
-     def submit(self):
+        volume_property.SetAmbient(ambient_val)
+        volume_property.SetDiffuse(diffuse_val)
+        volume_property.SetSpecular(specular_val)
+        volume_property.SetSpecularPower(spec_pow_val)
+
+        self.render_all()
+        
+
+    def reset_shading(self, modality_name):
+        """
+        Resets the shading parameters for the given modality, or for all modalities
+        if 'modality_name' is None.
+
+        :param modality_name: One of ['t1', 'flair', 'swi', 'phase'] or None
+        """
+
+        volume = getattr(self, f"{modality_name}_volume", None)
+        volume_property = volume.GetProperty()
+
+        # Reset the volume's shading
+        volume_property = volume.GetProperty()
+
+        volume_property.SetAmbient(0.4)
+        volume_property.SetDiffuse(0.6)
+        volume_property.SetSpecular(0.2)
+        volume_property.SetSpecularPower(0.1)
+
+        self.shader_sliders[modality_name]["ambient"].setValue(40)
+        self.shader_sliders[modality_name]["diffuse"].setValue(60)
+        self.shader_sliders[modality_name]["specular"].setValue(20)
+        self.shader_sliders[modality_name]["spec_power"].setValue(10)
+
+        self.render_all()
+
+
+    def submit(self):
         """Handle form submission"""
         print("Submitting findings:")
         

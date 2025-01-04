@@ -1,3 +1,4 @@
+from functools import partial
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QGridLayout,
     QLabel, QGroupBox, QRadioButton, QPushButton, QSlider,
@@ -9,6 +10,8 @@ from PyQt5.QtGui import QFont, QPalette, QColor
 class MainWindowUI(QMainWindow):
     def __init__(self):
         super().__init__()
+        # Dictionary to store references to each modality's shader sliders
+        self.shader_sliders = {}
         self.setupUi()
 
     def setupUi(self):
@@ -44,7 +47,7 @@ class MainWindowUI(QMainWindow):
         highlight = QColor("#0078D7")  # Windows blue for selection
         
         # Text colors
-        text = QColor("#FFFFFF")  # White text
+        text = QColor("#FFFFFF")      # White text
         disabled_text = QColor("#808080")  # Gray for disabled text
         
         # Set colors for various UI elements
@@ -270,7 +273,6 @@ class MainWindowUI(QMainWindow):
         thickness_layout.addLayout(thickness_controls)
         layout.addWidget(thickness_group)
 
-        
         # Step size
         step_group = self.create_group_box("Step size")
         step_layout = QVBoxLayout(step_group)
@@ -405,133 +407,87 @@ class MainWindowUI(QMainWindow):
         layout.addStretch()
         self.main_layout.addWidget(control_panel)
 
-    def createShaderPanel(self):
+    def createModalityShaderPanel(self, modality_name):
         """
-        Creates a single QGroupBox with the Ambient, Diffuse,
-        Specular, and Specular Power sliders for volume rendering.
-        These are shared across all modalities.
+        Create a group box with Ambient, Diffuse, Specular, and Specular Power
+        sliders for a specific modality. Store them in self.shader_sliders[modality_name].
         """
-        group_box = self.create_group_box("Volume Shading")
-
+        group_box = self.create_group_box(f"{modality_name.upper()} Shading")
         layout = QVBoxLayout(group_box)
         layout.setSpacing(8)
+
+        # Prepare a sub-dict to hold references to the sliders
+        self.shader_sliders[modality_name] = {}
+
+        def styled_slider():
+            s = QSlider(Qt.Horizontal)
+            s.setStyleSheet("""
+                QSlider::groove:horizontal {
+                    height: 8px;
+                    background: #404040;
+                    border-radius: 4px;
+                }
+                QSlider::handle:horizontal {
+                    background: #0078D7;
+                    border: none;
+                    width: 18px;
+                    margin: -5px 0;
+                    border-radius: 9px;
+                }
+                QSlider::handle:horizontal:hover {
+                    background: #1984D8;
+                }
+            """)
+            return s
 
         # Ambient
         ambient_layout = QHBoxLayout()
         ambient_label = QLabel("Ambient:")
         ambient_label.setStyleSheet("color: white; font-size: 11pt;")
-        self.ambient_slider = QSlider(Qt.Horizontal)
-        self.ambient_slider.setRange(0, 100)   # 0 -> 1 in steps of 0.01
-        self.ambient_slider.setValue(40)       # default 0.40
-        self.ambient_slider.setStyleSheet("""
-            QSlider::groove:horizontal {
-                height: 8px;
-                background: #404040;
-                border-radius: 4px;
-            }
-            QSlider::handle:horizontal {
-                background: #0078D7;
-                border: none;
-                width: 18px;
-                margin: -5px 0;
-                border-radius: 9px;
-            }
-            QSlider::handle:horizontal:hover {
-                background: #1984D8;
-            }
-        """)
+        ambient_slider = styled_slider()
+        ambient_slider.setRange(0, 100)   
+        ambient_slider.setValue(40)       # default = 0.40
         ambient_layout.addWidget(ambient_label)
-        ambient_layout.addWidget(self.ambient_slider)
+        ambient_layout.addWidget(ambient_slider)
         layout.addLayout(ambient_layout)
 
         # Diffuse
         diffuse_layout = QHBoxLayout()
         diffuse_label = QLabel("Diffuse:")
         diffuse_label.setStyleSheet("color: white; font-size: 11pt;")
-        self.diffuse_slider = QSlider(Qt.Horizontal)
-        self.diffuse_slider.setRange(0, 100)   # 0 -> 1
-        self.diffuse_slider.setValue(60)       # default 0.60
-        self.diffuse_slider.setStyleSheet("""
-            QSlider::groove:horizontal {
-                height: 8px;
-                background: #404040;
-                border-radius: 4px;
-            }
-            QSlider::handle:horizontal {
-                background: #0078D7;
-                border: none;
-                width: 18px;
-                margin: -5px 0;
-                border-radius: 9px;
-            }
-            QSlider::handle:horizontal:hover {
-                background: #1984D8;
-            }
-        """)
+        diffuse_slider = styled_slider()
+        diffuse_slider.setRange(0, 100)  
+        diffuse_slider.setValue(60)      # default = 0.60
         diffuse_layout.addWidget(diffuse_label)
-        diffuse_layout.addWidget(self.diffuse_slider)
+        diffuse_layout.addWidget(diffuse_slider)
         layout.addLayout(diffuse_layout)
 
         # Specular
         specular_layout = QHBoxLayout()
         specular_label = QLabel("Specular:")
         specular_label.setStyleSheet("color: white; font-size: 11pt;")
-        self.specular_slider = QSlider(Qt.Horizontal)
-        self.specular_slider.setRange(0, 100)  # 0 -> 1
-        self.specular_slider.setValue(20)      # default 0.20
-        self.specular_slider.setStyleSheet("""
-            QSlider::groove:horizontal {
-                height: 8px;
-                background: #404040;
-                border-radius: 4px;
-            }
-            QSlider::handle:horizontal {
-                background: #0078D7;
-                border: none;
-                width: 18px;
-                margin: -5px 0;
-                border-radius: 9px;
-            }
-            QSlider::handle:horizontal:hover {
-                background: #1984D8;
-            }
-        """)
+        specular_slider = styled_slider()
+        specular_slider.setRange(0, 100) 
+        specular_slider.setValue(20)     # default = 0.20
         specular_layout.addWidget(specular_label)
-        specular_layout.addWidget(self.specular_slider)
+        specular_layout.addWidget(specular_slider)
         layout.addLayout(specular_layout)
 
         # Specular Power
         spec_power_layout = QHBoxLayout()
         spec_power_label = QLabel("Spec. Power:")
         spec_power_label.setStyleSheet("color: white; font-size: 11pt;")
-        self.spec_power_slider = QSlider(Qt.Horizontal)
-        self.spec_power_slider.setRange(1, 50)  # just an example range
-        self.spec_power_slider.setValue(10)     # default
-        self.spec_power_slider.setStyleSheet("""
-            QSlider::groove:horizontal {
-                height: 8px;
-                background: #404040;
-                border-radius: 4px;
-            }
-            QSlider::handle:horizontal {
-                background: #0078D7;
-                border: none;
-                width: 18px;
-                margin: -5px 0;
-                border-radius: 9px;
-            }
-            QSlider::handle:horizontal:hover {
-                background: #1984D8;
-            }
-        """)
+        spec_power_slider = styled_slider()
+        spec_power_slider.setRange(1, 50)  
+        spec_power_slider.setValue(10)
         spec_power_layout.addWidget(spec_power_label)
-        spec_power_layout.addWidget(self.spec_power_slider)
+        spec_power_layout.addWidget(spec_power_slider)
         layout.addLayout(spec_power_layout)
 
+        # Reset Button
         reset_shader_layout = QHBoxLayout()
-        self.reset_shader_button = QPushButton("Reset")
-        # Optional styling for the button
-        self.reset_shader_button.setStyleSheet("""
+        reset_shader_btn = QPushButton("Reset")
+        reset_shader_btn.setStyleSheet("""
             QPushButton {
                 background-color: #404040;
                 color: white;
@@ -544,33 +500,47 @@ class MainWindowUI(QMainWindow):
                 background-color: #505050;
             }
         """)
-        reset_shader_layout.addStretch()  # Push button to the right
-        reset_shader_layout.addWidget(self.reset_shader_button)
+        reset_shader_layout.addStretch()
+        reset_shader_layout.addWidget(reset_shader_btn)
         layout.addLayout(reset_shader_layout)
-        
-        self.ambient_slider.valueChanged.connect(self.update_volume_lighting)
-        self.diffuse_slider.valueChanged.connect(self.update_volume_lighting)
-        self.specular_slider.valueChanged.connect(self.update_volume_lighting)
-        self.spec_power_slider.valueChanged.connect(self.update_volume_lighting)
-        self.reset_shader_button.clicked.connect(self.reset_shading)
 
+        # Store references in dictionary
+        self.shader_sliders[modality_name]["ambient"] = ambient_slider
+        self.shader_sliders[modality_name]["diffuse"] = diffuse_slider
+        self.shader_sliders[modality_name]["specular"] = specular_slider
+        self.shader_sliders[modality_name]["spec_power"] = spec_power_slider
+        self.shader_sliders[modality_name]["reset_btn"] = reset_shader_btn
+
+        # Connect signals
+        ambient_slider.valueChanged.connect(partial(self.update_volume_lighting, modality_name))
+        diffuse_slider.valueChanged.connect(partial(self.update_volume_lighting, modality_name))
+        specular_slider.valueChanged.connect(partial(self.update_volume_lighting, modality_name))
+        spec_power_slider.valueChanged.connect(partial(self.update_volume_lighting, modality_name))
+        reset_shader_btn.clicked.connect(partial(self.reset_shading, modality_name))
 
         return group_box
 
-
     def createRenderPanel(self):
-        """Create the right panel with render views"""
+        """Create the right panel with a 2x2 grid for volume views, and a separate 2x2 grid for shading."""
         render_panel = QWidget()
         render_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        
-        grid_layout = QGridLayout(render_panel)
-        grid_layout.setSpacing(10)
-        
+
+        # A vertical layout to hold:
+        #   - The 2x2 grid of volume frames
+        #   - The 2x2 grid of shading controls
+        vlayout = QVBoxLayout(render_panel)
+        vlayout.setSpacing(10)
+        vlayout.setContentsMargins(0, 0, 0, 0)
+
+        # First Grid: Volume Frames (2x2)
+        view_grid = QGridLayout()
+        view_grid.setSpacing(10)
+
         viewports = [
-            ("t1", "T1-Weighted", 0, 0),
-            ("swi", "SWI Magnitude", 0, 1),
-            ("flair", "FLAIR", 1, 0),
-            ("phase", "SWI Phase", 1, 1)
+            ("t1",    "T1-Weighted",    0, 0),
+            ("swi",   "SWI Magnitude",  0, 1),
+            ("flair", "FLAIR",          1, 0),
+            ("phase", "SWI Phase",      1, 1)
         ]
         
         for name, title, row, col in viewports:
@@ -595,6 +565,7 @@ class MainWindowUI(QMainWindow):
             group_layout = QVBoxLayout(group)
             group_layout.setContentsMargins(5, 15, 5, 5)
             
+            # The actual render frame for the volume
             frame = QFrame(group)
             frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             frame.setStyleSheet("""
@@ -609,32 +580,45 @@ class MainWindowUI(QMainWindow):
             
             setattr(self, f"{name}_frame", frame)
             setattr(self, f"{name}_layout", frame_layout)
-            
+
             group_layout.addWidget(frame)
-            grid_layout.addWidget(group, row, col)
-        
-        grid_layout.setColumnStretch(0, 1)
-        grid_layout.setColumnStretch(1, 1)
-        grid_layout.setRowStretch(0, 1)
-        grid_layout.setRowStretch(1, 1)
-        
+
+            # NOTE: We no longer add the shading panel here since we want a separate 2x2 grid below.
+
+            view_grid.addWidget(group, row, col)
+
+        # Make the volume grid expand equally
+        view_grid.setColumnStretch(0, 1)
+        view_grid.setColumnStretch(1, 1)
+        view_grid.setRowStretch(0, 1)
+        view_grid.setRowStretch(1, 1)
+
+        # Second Grid: Shading Controls (2x2)
+        shading_grid = QGridLayout()
+        shading_grid.setSpacing(10)
+
+        # Each cell is one modality's shading box
+        shading_grid.addWidget(self.createModalityShaderPanel("t1"),    0, 0)
+        shading_grid.addWidget(self.createModalityShaderPanel("swi"),   0, 1)
+        shading_grid.addWidget(self.createModalityShaderPanel("flair"), 1, 0)
+        shading_grid.addWidget(self.createModalityShaderPanel("phase"), 1, 1)
+
+        # Optionally set stretch if you want them to resize in certain proportions
+        # shading_grid.setColumnStretch(0, 1)
+        # shading_grid.setColumnStretch(1, 1)
+        # shading_grid.setRowStretch(0, 1)
+        # shading_grid.setRowStretch(1, 1)
+
+        # Add both grids to the main vertical layout
+        vlayout.addLayout(view_grid)
+        vlayout.addLayout(shading_grid)
+
         self.main_layout.addWidget(render_panel, stretch=1)
 
-        # Create a single group box with the volume rendering controls
-        shared_controls_box = self.createShaderPanel()
-        # Make it span all columns in a new row "2" (beneath the 2×2 grid)
-        grid_layout.addWidget(shared_controls_box, 2, 0, 1, 2)
-
-        # Add this entire grid to the main layout
-        self.main_layout.addWidget(render_panel, stretch=1)
-
-        # Connect thickness slider to value label
+        # Connect thickness/step sliders to their labels
         self.thickness_slider.valueChanged.connect(
             lambda value: self.thickness_value.setText(str(value))
         )
-
-        
-        # Connect step slider to value label
         self.step_slider.valueChanged.connect(
             lambda value: self.step_value.setText(str(value))
         )
