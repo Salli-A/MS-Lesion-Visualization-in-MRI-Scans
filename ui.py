@@ -405,6 +405,139 @@ class MainWindowUI(QMainWindow):
         layout.addStretch()
         self.main_layout.addWidget(control_panel)
 
+    def create_shared_volume_controls(self):
+        """
+        Creates a single QGroupBox with the Ambient, Diffuse,
+        Specular, and Specular Power sliders for volume rendering.
+        These are shared across all modalities.
+        """
+        group_box = self.create_group_box("Volume Rendering (Shared)")
+
+        layout = QVBoxLayout(group_box)
+        layout.setSpacing(8)
+
+        # ============= Ambient =============
+        ambient_layout = QHBoxLayout()
+        ambient_label = QLabel("Ambient:")
+        ambient_label.setStyleSheet("color: white; font-size: 11pt;")
+        self.ambient_slider = QSlider(Qt.Horizontal)
+        self.ambient_slider.setRange(0, 100)   # 0 -> 1 in steps of 0.01
+        self.ambient_slider.setValue(40)       # default 0.40
+        self.ambient_slider.setStyleSheet("""
+            QSlider::groove:horizontal {
+                height: 8px;
+                background: #404040;
+                border-radius: 4px;
+            }
+            QSlider::handle:horizontal {
+                background: #0078D7;
+                border: none;
+                width: 18px;
+                margin: -5px 0;
+                border-radius: 9px;
+            }
+            QSlider::handle:horizontal:hover {
+                background: #1984D8;
+            }
+        """)
+        ambient_layout.addWidget(ambient_label)
+        ambient_layout.addWidget(self.ambient_slider)
+        layout.addLayout(ambient_layout)
+
+        # ============= Diffuse =============
+        diffuse_layout = QHBoxLayout()
+        diffuse_label = QLabel("Diffuse:")
+        diffuse_label.setStyleSheet("color: white; font-size: 11pt;")
+        self.diffuse_slider = QSlider(Qt.Horizontal)
+        self.diffuse_slider.setRange(0, 100)   # 0 -> 1
+        self.diffuse_slider.setValue(60)       # default 0.60
+        self.diffuse_slider.setStyleSheet("""
+            QSlider::groove:horizontal {
+                height: 8px;
+                background: #404040;
+                border-radius: 4px;
+            }
+            QSlider::handle:horizontal {
+                background: #0078D7;
+                border: none;
+                width: 18px;
+                margin: -5px 0;
+                border-radius: 9px;
+            }
+            QSlider::handle:horizontal:hover {
+                background: #1984D8;
+            }
+        """)
+        diffuse_layout.addWidget(diffuse_label)
+        diffuse_layout.addWidget(self.diffuse_slider)
+        layout.addLayout(diffuse_layout)
+
+        # ============= Specular =============
+        specular_layout = QHBoxLayout()
+        specular_label = QLabel("Specular:")
+        specular_label.setStyleSheet("color: white; font-size: 11pt;")
+        self.specular_slider = QSlider(Qt.Horizontal)
+        self.specular_slider.setRange(0, 100)  # 0 -> 1
+        self.specular_slider.setValue(20)      # default 0.20
+        self.specular_slider.setStyleSheet("""
+            QSlider::groove:horizontal {
+                height: 8px;
+                background: #404040;
+                border-radius: 4px;
+            }
+            QSlider::handle:horizontal {
+                background: #0078D7;
+                border: none;
+                width: 18px;
+                margin: -5px 0;
+                border-radius: 9px;
+            }
+            QSlider::handle:horizontal:hover {
+                background: #1984D8;
+            }
+        """)
+        specular_layout.addWidget(specular_label)
+        specular_layout.addWidget(self.specular_slider)
+        layout.addLayout(specular_layout)
+
+        # ============= Specular Power =============
+        spec_power_layout = QHBoxLayout()
+        spec_power_label = QLabel("Spec. Power:")
+        spec_power_label.setStyleSheet("color: white; font-size: 11pt;")
+        self.spec_power_slider = QSlider(Qt.Horizontal)
+        self.spec_power_slider.setRange(1, 50)  # just an example range
+        self.spec_power_slider.setValue(10)     # default
+        self.spec_power_slider.setStyleSheet("""
+            QSlider::groove:horizontal {
+                height: 8px;
+                background: #404040;
+                border-radius: 4px;
+            }
+            QSlider::handle:horizontal {
+                background: #0078D7;
+                border: none;
+                width: 18px;
+                margin: -5px 0;
+                border-radius: 9px;
+            }
+            QSlider::handle:horizontal:hover {
+                background: #1984D8;
+            }
+        """)
+        spec_power_layout.addWidget(spec_power_label)
+        spec_power_layout.addWidget(self.spec_power_slider)
+        layout.addLayout(spec_power_layout)
+
+        
+        self.ambient_slider.valueChanged.connect(self.update_volume_lighting)
+        self.diffuse_slider.valueChanged.connect(self.update_volume_lighting)
+        self.specular_slider.valueChanged.connect(self.update_volume_lighting)
+        self.spec_power_slider.valueChanged.connect(self.update_volume_lighting)
+
+
+        return group_box
+
+
     def createRenderPanel(self):
         """Create the right panel with render views"""
         render_panel = QWidget()
@@ -465,6 +598,14 @@ class MainWindowUI(QMainWindow):
         grid_layout.setRowStretch(0, 1)
         grid_layout.setRowStretch(1, 1)
         
+        self.main_layout.addWidget(render_panel, stretch=1)
+
+        # Create a single group box with the volume rendering controls
+        shared_controls_box = self.create_shared_volume_controls()
+        # Make it span all columns in a new row "2" (beneath the 2×2 grid)
+        grid_layout.addWidget(shared_controls_box, 2, 0, 1, 2)
+
+        # Add this entire grid to the main layout
         self.main_layout.addWidget(render_panel, stretch=1)
 
         # Connect thickness slider to value label

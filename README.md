@@ -12,7 +12,6 @@
 
 ## Needs to be done:
 
-- Fix the reading of image files.
 - Fix color and opacity transfer functions for modalities
     - Seperate transfer functions for each modality
     - Automatic based on histogram? Adjustable (pehaps could be good to do on per slice basis?)?

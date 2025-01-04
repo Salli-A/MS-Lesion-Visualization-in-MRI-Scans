@@ -51,11 +51,11 @@ class VolumeRenderer:
             # Create volume visualization pipeline
             self.volume_mapper = self._setup_mapper()  # Store mapper as instance variable
             volume_property = self._setup_volume_property()
-            volume = self._setup_volume(self.volume_mapper, volume_property)
+            self._setup_volume(self.volume_mapper, volume_property)
              
             # Configure renderer
             self.renderer.SetActiveCamera(self.viewer.camera)
-            self.renderer.AddVolume(volume)
+            self.renderer.AddVolume(self.volume)
             
             # Add bounds visualization if requested
             if self.show_bounds:
@@ -189,11 +189,10 @@ class VolumeRenderer:
         
     def _setup_volume(self, mapper, property):
         """Create and return volume with specified mapper and property."""
-        volume = vtk.vtkVolume()
-        volume.SetMapper(mapper)
-        volume.SetProperty(property)
-        return volume
-            
+        self.volume = vtk.vtkVolume()
+        self.volume.SetMapper(mapper)
+        self.volume.SetProperty(property)
+
     def _add_bounds_outline(self):
         """Add white outline showing volume bounds."""
         outline = vtk.vtkOutlineFilter()
@@ -208,9 +207,9 @@ class VolumeRenderer:
         
         self.renderer.AddActor(outline_actor)
         
-    def get_window_and_interactor(self):
+    def get_window_interactor_volume(self):
         """Return render window and interactor for external use."""
-        return self.window, self.interactor
+        return self.window, self.interactor, self.volume
 
 def renderPlaneVolume(self, frame, layout, filename, show_bounds=True, modality=None):
     """
@@ -225,4 +224,4 @@ def renderPlaneVolume(self, frame, layout, filename, show_bounds=True, modality=
         show_bounds=show_bounds,
         modality=modality
     )
-    return renderer.get_window_and_interactor()
+    return renderer.get_window_interactor_volume()
