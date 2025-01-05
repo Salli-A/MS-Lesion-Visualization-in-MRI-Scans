@@ -13,6 +13,7 @@ class SlicePlanes:
         self.slice_direction = 'y'
         self.current_slice = None
         self.global_bounds = None
+        self.renderer_instances = []
         
     def initPlanes(self, slice_direction='y'):
         """Initialize slice planes after windows are added."""
@@ -104,13 +105,17 @@ class SlicePlanes:
         self._updateCroppingPlanes()
         
     def setSliceThickness(self, thickness):
-        """Update slice thickness and adjust view."""
+        """Update slice thickness and notify renderers."""
         self.thickness = thickness
         self.step = thickness / 2
         self._updateCroppingPlanes()
         
+        # Update volume properties in all renderers
+        for renderer in self.renderer_instances:
+            renderer.update_volume_property(thickness)
+        
     def _updateCroppingPlanes(self):
-        """Update cropping planes for all windows."""
+        """Update cropping planes for all windows and masks."""
         if not self.global_bounds:
             return
             
@@ -119,9 +124,13 @@ class SlicePlanes:
         cropping_bounds[self.direction_min] = self.current_slice
         cropping_bounds[self.direction_max] = self.current_slice + self.thickness
         
-        # Update all windows
+        # Update main volume windows
         for window in self.windows:
             window['mapper'].SetCroppingRegionPlanes(cropping_bounds)
+            
+        # Update mask overlays if they exist
+        if hasattr(self.instance, 'mask_overlay') and self.instance.mask_overlay:
+            self.instance.mask_overlay.update_clipping_bounds()
             
     def addWindow(self, mapper, renderer, bounds):
         """Add a new window for synchronized viewing."""
@@ -130,6 +139,10 @@ class SlicePlanes:
             'renderer': renderer,
             'bounds': bounds
         })
+    
+    def addRenderer(self, renderer_instance):
+        """Add a renderer instance for property updates."""
+        self.renderer_instances.append(renderer_instance)
 
 class SliceInteractor(vtk.vtkInteractorStyleTrackballCamera):
     """Handles mouse interaction for slice navigation."""

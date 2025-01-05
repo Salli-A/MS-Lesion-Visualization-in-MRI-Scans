@@ -8,12 +8,16 @@ from PyQt5.QtWidgets import QDesktopWidget, QMessageBox
 
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from slice_interactor import SliceInteractor, SlicePlanes
-from volume_multimodal import renderPlaneVolume
+from volume_multimodal import VolumeRenderer
 from ui import MainWindowUI
+from mask_overlay import MaskOverlay
 
 class MRIViewer(MainWindowUI):
     def __init__(self, base_path):
         super().__init__()
+        
+        # Initialize mask_overlay first
+        self.mask_overlay = None
         
         # Set up camera FIRST
         self.setup_camera()
@@ -27,12 +31,75 @@ class MRIViewer(MainWindowUI):
         # Initialize UI components (after we have files loaded)
         self.initializeUI()
         
+        # Connect mask control signals
+        self.connect_mask_controls()
+        
         # Timer for rendering sync
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.render_all)
         self.timer.start(2)  # msec per frame
         
         self.show()
+    
+    
+    def setup_mask_overlay(self, session_path):
+        """Set up mask overlay for current session."""
+        try:
+            # Remove existing mask overlay if it exists
+            if self.mask_overlay:
+                self.remove_current_masks()
+            
+            self.mask_overlay = MaskOverlay(session_path)
+            self.mask_overlay.set_slice_planes(self.SlicePlanes)  
+            self.mask_overlay.load_masks()
+            
+            # Store current UI states
+            lesion_visible = self.lesion_toggle.isChecked()
+            prl_visible = self.prl_toggle.isChecked()
+            lesion_opacity = self.lesion_opacity_slider.value() / 100.0
+            prl_opacity = self.prl_opacity_slider.value() / 100.0
+            
+            # Add to all renderers with shared camera
+            renderers = {
+                't1': self.t1_window.GetRenderers().GetFirstRenderer(),
+                'flair': self.flair_window.GetRenderers().GetFirstRenderer(),
+                'swi_mag': self.swi_window.GetRenderers().GetFirstRenderer(),
+                'swi_phase': self.phase_window.GetRenderers().GetFirstRenderer()
+            }
+            
+            for modality, renderer in renderers.items():
+                # Ensure renderer uses the shared camera
+                renderer.SetActiveCamera(self.camera)
+                self.mask_overlay.add_to_renderer(renderer, modality)
+            
+            # Apply stored states
+            self.mask_overlay.set_lesion_visibility(lesion_visible)
+            self.mask_overlay.set_prl_visibility(prl_visible)
+            self.mask_overlay.set_lesion_opacity(lesion_opacity)
+            self.mask_overlay.set_prl_opacity(prl_opacity)
+            
+        except FileNotFoundError as e:
+            print(f"Warning: Could not load masks - {str(e)}")
+            # Reset toggle buttons if mask loading fails
+            self.lesion_toggle.setChecked(False)
+            self.prl_toggle.setChecked(False)
+        except Exception as e:
+            print(f"Error setting up mask overlay: {str(e)}")
+            
+    def remove_current_masks(self):
+        """Remove current mask overlays from all renderers."""
+        if not self.mask_overlay:
+            return
+            
+        renderers = {
+            't1': self.t1_window.GetRenderers().GetFirstRenderer(),
+            'flair': self.flair_window.GetRenderers().GetFirstRenderer(),
+            'swi_mag': self.swi_window.GetRenderers().GetFirstRenderer(),
+            'swi_phase': self.phase_window.GetRenderers().GetFirstRenderer()
+        }
+        
+        for modality, renderer in renderers.items():
+            self.mask_overlay.remove_from_renderer(renderer, modality)
     
     def find_image_files(self, session_path, modalities):
         """
@@ -74,9 +141,6 @@ class MRIViewer(MainWindowUI):
         """
         Set up file paths based on the provided base directory.
         Looks for registered files with 'Lreg_' prefix.
-        
-        Args:
-            base_path (str): Path to the base directory containing session folders
         """
         try:
             # Find all session directories and sort them
@@ -89,9 +153,6 @@ class MRIViewer(MainWindowUI):
             
             if not self.session_dirs:
                 raise ValueError(f"No session directories found in {base_path}")
-            
-            # Sort sessions chronologically
-            self.session_dirs.sort()
             
             # Store base path and current session index
             self.base_path = base_path
@@ -135,8 +196,8 @@ class MRIViewer(MainWindowUI):
             self.axial_button.setChecked(True)
             self.change_slicing()
             
-            # Reset camera to initial position
-            self.reset_view()
+            # Set up mask overlay for new session
+            self.setup_mask_overlay(full_session_path)
             
         except Exception as e:
             raise ValueError(f"Error loading session: {str(e)}")
@@ -191,46 +252,72 @@ class MRIViewer(MainWindowUI):
     
 
     def render_modalities(self, filenames):
-          """Render all modalities"""
-          try:
-               # Set up the slice planes
-               self.SlicePlanes = SlicePlanes(self)
-               
-               # Render each modality
-               self.t1_window, self.t1_iren = renderPlaneVolume(
-                    self, frame=self.t1_frame, layout=self.t1_layout, 
-                    filename=filenames[0], modality='t1'
-               )
-               
-               self.flair_window, self.flair_iren = renderPlaneVolume(
-                    self, frame=self.flair_frame, layout=self.flair_layout, 
-                    filename=filenames[1], modality='flair'
-               )
-               
-               self.swi_window, self.swi_iren = renderPlaneVolume(
-                    self, frame=self.swi_frame, layout=self.swi_layout, 
-                    filename=filenames[2], modality='swi_mag'
-               )
-               
-               self.phase_window, self.phase_iren = renderPlaneVolume(
-                    self, frame=self.phase_frame, layout=self.phase_layout, 
-                    filename=filenames[3], modality='swi_phase'
-               )
-               
-               # Initialize slice planes
-               self.SlicePlanes.initPlanes()
-               
-               # Set up interactors
-               interactors = [self.t1_iren, self.flair_iren, self.swi_iren, self.phase_iren]
-               for iren in interactors:
-                    style = SliceInteractor(self)
-                    iren.SetInteractorStyle(style)
-                    iren.Initialize()
-                    iren.Start()
-                    
-          except Exception as e:
-               print(f"Error in render_modalities: {str(e)}")
-               raise
+        """Render all modalities with enhanced visualization."""
+        try:
+            # Set up the slice planes
+            self.SlicePlanes = SlicePlanes(self)
+            
+            # Create renderers for each modality
+            self.renderer_instances = []
+            
+            # T1-weighted
+            self.t1_renderer = VolumeRenderer(
+                viewer_instance=self,
+                frame=self.t1_frame,
+                layout=self.t1_layout,
+                filename=filenames[0],
+                modality='t1'
+            )
+            self.t1_window, self.t1_iren = self.t1_renderer.get_window_and_interactor()
+            self.SlicePlanes.addRenderer(self.t1_renderer)
+            
+            # FLAIR
+            self.flair_renderer = VolumeRenderer(
+                viewer_instance=self,
+                frame=self.flair_frame,
+                layout=self.flair_layout,
+                filename=filenames[1],
+                modality='flair'
+            )
+            self.flair_window, self.flair_iren = self.flair_renderer.get_window_and_interactor()
+            self.SlicePlanes.addRenderer(self.flair_renderer)
+            
+            # SWI Magnitude
+            self.swi_renderer = VolumeRenderer(
+                viewer_instance=self,
+                frame=self.swi_frame,
+                layout=self.swi_layout,
+                filename=filenames[2],
+                modality='swi_mag'
+            )
+            self.swi_window, self.swi_iren = self.swi_renderer.get_window_and_interactor()
+            self.SlicePlanes.addRenderer(self.swi_renderer)
+            
+            # SWI Phase
+            self.phase_renderer = VolumeRenderer(
+                viewer_instance=self,
+                frame=self.phase_frame,
+                layout=self.phase_layout,
+                filename=filenames[3],
+                modality='swi_phase'
+            )
+            self.phase_window, self.phase_iren = self.phase_renderer.get_window_and_interactor()
+            self.SlicePlanes.addRenderer(self.phase_renderer)
+            
+            # Initialize slice planes
+            self.SlicePlanes.initPlanes()
+            
+            # Set up interactors
+            interactors = [self.t1_iren, self.flair_iren, self.swi_iren, self.phase_iren]
+            for iren in interactors:
+                style = SliceInteractor(self)
+                iren.SetInteractorStyle(style)
+                iren.Initialize()
+                iren.Start()
+                
+        except Exception as e:
+            print(f"Error in render_modalities: {str(e)}")
+            raise
     
     def render_all(self):
         """Force rendering for camera sync"""
@@ -320,9 +407,11 @@ class MRIViewer(MainWindowUI):
         self.render_all()
 
     def update_thickness(self):
-        """Update slice thickness"""
+        """Update slice thickness with enhanced visualization."""
         thickness = self.thickness_slider.value()
-        self.SlicePlanes.setSliceThickness(thickness)
+        if hasattr(self, 'SlicePlanes'):
+            self.SlicePlanes.setSliceThickness(thickness)
+        self.render_all()  # Ensure all views are updated
 
     def submit(self):
         """Handle form submission"""
@@ -355,6 +444,42 @@ class MRIViewer(MainWindowUI):
         # Optional: save to file or database here
         
         print("Submission complete")
+    
+    def connect_mask_controls(self):
+        """Connect mask control UI elements to their handlers."""
+        # Connect toggle buttons
+        self.lesion_toggle.clicked.connect(self.toggle_lesion_mask)
+        self.prl_toggle.clicked.connect(self.toggle_prl_mask)
+        
+        # Connect opacity sliders
+        self.lesion_opacity_slider.valueChanged.connect(self.update_lesion_opacity)
+        self.prl_opacity_slider.valueChanged.connect(self.update_prl_opacity)
+
+    def toggle_lesion_mask(self, checked):
+        """Toggle visibility of lesion mask."""
+        if self.mask_overlay:
+            self.mask_overlay.set_lesion_visibility(checked)
+            self.render_all()
+
+    def toggle_prl_mask(self, checked):
+        """Toggle visibility of PRL mask."""
+        if self.mask_overlay:
+            self.mask_overlay.set_prl_visibility(checked)
+            self.render_all()
+
+    def update_lesion_opacity(self, value):
+        """Update opacity of lesion mask."""
+        if self.mask_overlay:
+            opacity = value / 100.0  # Convert slider value to opacity
+            self.mask_overlay.set_lesion_opacity(opacity)
+            self.render_all()
+
+    def update_prl_opacity(self, value):
+        """Update opacity of PRL mask."""
+        if self.mask_overlay:
+            opacity = value / 100.0  # Convert slider value to opacity
+            self.mask_overlay.set_prl_opacity(opacity)
+            self.render_all()
 
 def main():
     if len(sys.argv) != 2:

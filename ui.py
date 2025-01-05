@@ -361,6 +361,158 @@ class MainWindowUI(QMainWindow):
         
         layout.addStretch()
         self.main_layout.addWidget(control_panel)
+        
+        mask_group = self.create_group_box("Mask Controls")
+        mask_layout = QVBoxLayout(mask_group)
+
+        # Lesion Mask Controls
+        lesion_controls = QVBoxLayout()
+        lesion_header = QHBoxLayout()
+        
+        self.lesion_toggle = QPushButton("Lesion Mask")
+        self.lesion_toggle.setCheckable(True)
+        self.lesion_toggle.setChecked(True)
+        self.lesion_toggle.setStyleSheet("""
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                border: none;
+                padding: 8px;
+                font-size: 11pt;
+                border-radius: 4px;
+            }
+            QPushButton:checked {
+                background-color: #0078D7;
+            }
+            QPushButton:hover {
+                background-color: #505050;
+            }
+            QPushButton:checked:hover {
+                background-color: #1984D8;
+            }
+        """)
+        lesion_header.addWidget(self.lesion_toggle)
+
+        lesion_slider_layout = QHBoxLayout()
+        self.lesion_opacity_slider = QSlider(Qt.Horizontal)
+        self.lesion_opacity_slider.setStyleSheet("""
+            QSlider::groove:horizontal {
+                height: 8px;
+                background: #404040;
+                border-radius: 4px;
+            }
+            QSlider::handle:horizontal {
+                background: #0078D7;
+                border: none;
+                width: 18px;
+                margin: -5px 0;
+                border-radius: 9px;
+            }
+            QSlider::handle:horizontal:hover {
+                background: #1984D8;
+            }
+        """)
+        self.lesion_opacity_slider.setRange(0, 100)
+        self.lesion_opacity_slider.setValue(40)  # Default 0.4 opacity * 100
+        
+        self.lesion_opacity_value = QLabel("0.4")
+        self.lesion_opacity_value.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-size: 11pt;
+                min-width: 30px;
+                padding: 0 5px;
+            }
+        """)
+        
+        lesion_slider_layout.addWidget(QLabel("Opacity:"))
+        lesion_slider_layout.addWidget(self.lesion_opacity_slider)
+        lesion_slider_layout.addWidget(self.lesion_opacity_value)
+        
+        lesion_controls.addLayout(lesion_header)
+        lesion_controls.addLayout(lesion_slider_layout)
+        
+        # PRL Mask Controls
+        prl_controls = QVBoxLayout()
+        prl_header = QHBoxLayout()
+        
+        self.prl_toggle = QPushButton("PRL Mask")
+        self.prl_toggle.setCheckable(True)
+        self.prl_toggle.setChecked(True)
+        self.prl_toggle.setStyleSheet("""
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                border: none;
+                padding: 8px;
+                font-size: 11pt;
+                border-radius: 4px;
+            }
+            QPushButton:checked {
+                background-color: #0078D7;
+            }
+            QPushButton:hover {
+                background-color: #505050;
+            }
+            QPushButton:checked:hover {
+                background-color: #1984D8;
+            }
+        """)
+        prl_header.addWidget(self.prl_toggle)
+
+        prl_slider_layout = QHBoxLayout()
+        self.prl_opacity_slider = QSlider(Qt.Horizontal)
+        self.prl_opacity_slider.setStyleSheet("""
+            QSlider::groove:horizontal {
+                height: 8px;
+                background: #404040;
+                border-radius: 4px;
+            }
+            QSlider::handle:horizontal {
+                background: #0078D7;
+                border: none;
+                width: 18px;
+                margin: -5px 0;
+                border-radius: 9px;
+            }
+            QSlider::handle:horizontal:hover {
+                background: #1984D8;
+            }
+        """)
+        self.prl_opacity_slider.setRange(0, 100)
+        self.prl_opacity_slider.setValue(40)  # Default 0.4 opacity * 100
+        
+        self.prl_opacity_value = QLabel("0.4")
+        self.prl_opacity_value.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-size: 11pt;
+                min-width: 30px;
+                padding: 0 5px;
+            }
+        """)
+        
+        prl_slider_layout.addWidget(QLabel("Opacity:"))
+        prl_slider_layout.addWidget(self.prl_opacity_slider)
+        prl_slider_layout.addWidget(self.prl_opacity_value)
+        
+        prl_controls.addLayout(prl_header)
+        prl_controls.addLayout(prl_slider_layout)
+
+        # Add controls to mask group
+        mask_layout.addLayout(lesion_controls)
+        mask_layout.addLayout(prl_controls)
+        
+        # Add mask group to main layout
+        layout.addWidget(mask_group)
+
+        # Connect opacity sliders to value labels
+        self.lesion_opacity_slider.valueChanged.connect(
+            lambda value: self.lesion_opacity_value.setText(f"{value/100:.1f}")
+        )
+        self.prl_opacity_slider.valueChanged.connect(
+            lambda value: self.prl_opacity_value.setText(f"{value/100:.1f}")
+        )
 
     def createRenderPanel(self):
         """Create the right panel with render views"""
