@@ -38,7 +38,7 @@ class MaskOverlay:
         self.prl_mask = prl_files[0]
         
     def create_mask_actor(self, mask_file, color):
-        """Create a VTK actor for mask visualization using volume rendering."""
+        """Create a VTK actor for solid mask visualization using volume rendering."""
         # Read mask data
         reader = vtk.vtkNIFTIImageReader()
         reader.SetFileName(mask_file)
@@ -50,22 +50,27 @@ class MaskOverlay:
         mapper.CroppingOn()
         mapper.SetCroppingRegionFlags(vtk.VTK_CROP_SUBVOLUME)
         
-        # Create transfer functions for semi-transparent rendering
+        # Create transfer functions for solid rendering of binary mask
         color_tf = vtk.vtkColorTransferFunction()
-        color_tf.AddRGBPoint(0, 0, 0, 0)    # transparent for background
-        color_tf.AddRGBPoint(0.5, *color)    # use provided color for mask
-        color_tf.AddRGBPoint(1.0, *color)
+        color_tf.AddRGBPoint(0, 0, 0, 0)    # transparent for background (0)
+        color_tf.AddRGBPoint(1, *color)      # solid color for mask (1)
         
         opacity_tf = vtk.vtkPiecewiseFunction()
-        opacity_tf.AddPoint(0, 0)      # transparent background
-        opacity_tf.AddPoint(0.5, 0.4)  # semi-transparent mask
-        opacity_tf.AddPoint(1.0, 0.4)
+        opacity_tf.AddPoint(0, 0)            # fully transparent for background
+        opacity_tf.AddPoint(0.5, 0)          # ensure clean transition
+        opacity_tf.AddPoint(1, 1)            # fully opaque for mask
         
-        # Set up volume properties
+        # Set up volume properties with enhanced shading
         volume_property = vtk.vtkVolumeProperty()
         volume_property.SetColor(color_tf)
         volume_property.SetScalarOpacity(opacity_tf)
         volume_property.SetInterpolationTypeToLinear()
+        # Enable shading for better depth perception
+        volume_property.ShadeOn()
+        volume_property.SetAmbient(0.3)      # ambient lighting for better visibility
+        volume_property.SetDiffuse(0.7)      # diffuse reflection for surface detail
+        volume_property.SetSpecular(0.2)     # specular highlights for 3D effect
+        volume_property.SetSpecularPower(8)  # controls the size of specular highlights
         
         # Create volume
         volume = vtk.vtkVolume()

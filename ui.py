@@ -2,7 +2,8 @@ from functools import partial
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QGridLayout,
     QLabel, QGroupBox, QRadioButton, QPushButton, QSlider,
-    QCheckBox, QPlainTextEdit, QFrame, QSizePolicy
+    QCheckBox, QPlainTextEdit, QFrame, QSizePolicy, QScrollArea,
+    QApplication, QToolButton
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QPalette, QColor
@@ -10,47 +11,42 @@ from PyQt5.QtGui import QFont, QPalette, QColor
 class MainWindowUI(QMainWindow):
     def __init__(self):
         super().__init__()
-        # Dictionary to store references to each modality's shader sliders
         self.shader_sliders = {}
+        self.control_panel_visible = True
+        self.shading_visible = False
         self.setupUi()
 
     def setupUi(self):
-        # Set dark theme color palette
+        # Set dark theme and configure window
         self.setup_dark_theme()
-        
-        # Main window configuration
         self.setWindowTitle("MRI Viewer")
-        self.setMinimumSize(1400, 900)
+        screen = QApplication.primaryScreen().geometry()
+        self.setMinimumSize(int(screen.width() * 0.7), int(screen.height() * 0.7))
         
         # Set default font
-        default_font = QFont("Segoe UI", 10)
-        self.setFont(default_font)
+        self.setFont(QFont("Segoe UI", 10))
         
-        # Central widget setup
+        # Main layout setup
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.main_layout = QHBoxLayout(self.central_widget)
         self.main_layout.setSpacing(10)
         self.main_layout.setContentsMargins(10, 10, 10, 10)
         
-        # Create panels
+        # Create main panels
         self.createControlPanel()
         self.createRenderPanel()
 
     def setup_dark_theme(self):
         """Configure dark theme with improved contrast"""
         palette = QPalette()
+        background = QColor("#1E1E1E")
+        alternate_background = QColor("#2D2D2D")
+        highlight = QColor("#0078D7")
+        text = QColor("#FFFFFF")
+        disabled_text = QColor("#808080")
         
-        # Background colors
-        background = QColor("#1E1E1E")  # Slightly lighter than pure black
-        alternate_background = QColor("#2D2D2D")  # Even lighter for controls
-        highlight = QColor("#0078D7")  # Windows blue for selection
-        
-        # Text colors
-        text = QColor("#FFFFFF")      # White text
-        disabled_text = QColor("#808080")  # Gray for disabled text
-        
-        # Set colors for various UI elements
+        # Set color scheme
         palette.setColor(QPalette.Window, background)
         palette.setColor(QPalette.WindowText, text)
         palette.setColor(QPalette.Base, alternate_background)
@@ -63,7 +59,6 @@ class MainWindowUI(QMainWindow):
         palette.setColor(QPalette.ButtonText, text)
         palette.setColor(QPalette.Highlight, highlight)
         palette.setColor(QPalette.HighlightedText, text)
-        
         self.setPalette(palette)
 
     def create_group_box(self, title):
@@ -88,18 +83,211 @@ class MainWindowUI(QMainWindow):
         """)
         return group
 
+
     def createControlPanel(self):
-        """Create the left control panel with improved styling"""
+        """Create collapsible control panel with scrollable content"""
+        # Container for control panel and collapse button
+        control_container = QWidget()
+        control_container.setMaximumWidth(400)
+        container_layout = QHBoxLayout(control_container)
+        container_layout.setSpacing(0)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Collapse button
+        self.collapse_button = QToolButton()
+        self.collapse_button.setText("◀")
+        self.collapse_button.setCheckable(True)
+        self.collapse_button.setFixedSize(20, 60)
+        self.collapse_button.setStyleSheet("""
+            QToolButton {
+                background-color: #404040;
+                color: white;
+                border: none;
+                border-radius: 4px;
+            }
+            QToolButton:checked {
+                background-color: #0078D7;
+            }
+        """)
+        self.collapse_button.clicked.connect(self.toggleControlPanel)
+
+        # Scrollable control panel
+        self.control_scroll = QScrollArea()
+        self.control_scroll.setWidgetResizable(True)
+        self.control_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.control_scroll.setStyleSheet("QScrollArea { border: none; }")
+
+        # Control panel content
         control_panel = QWidget()
-        control_panel.setFixedWidth(300)
+        control_panel.setMinimumWidth(300)
         layout = QVBoxLayout(control_panel)
         layout.setSpacing(15)
+
+        # Add all control groups
+        self.addCaseInfo(layout)
+        self.addViewSettings(layout)
+        self.addThicknessControls(layout)
+        self.addStepControls(layout)
+        self.addMarkScan(layout)
+        self.addMaskControls(layout)
+
+        # Add stretch at the end
+        layout.addStretch()
+
+        # Set up control panel hierarchy
+        self.control_scroll.setWidget(control_panel)
+        container_layout.addWidget(self.collapse_button)
+        container_layout.addWidget(self.control_scroll)
+        self.main_layout.addWidget(control_container)
+
+    def toggleControlPanel(self, checked):
+        """Toggle control panel visibility"""
+        if checked:
+            self.control_scroll.setMaximumWidth(0)
+            self.collapse_button.setText("▶")
+        else:
+            self.control_scroll.setMaximumWidth(400)
+            self.collapse_button.setText("◀")
+
+    def createRenderPanel(self):
+        """Create render panel with maximizable viewports"""
+        render_panel = QWidget()
+        render_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        vlayout = QVBoxLayout(render_panel)
+        vlayout.setSpacing(10)
+        vlayout.setContentsMargins(0, 0, 0, 0)
+
+        # Create viewport grid
+        view_grid = QGridLayout()
+        view_grid.setSpacing(10)
+
+        # Define viewports
+        viewports = [
+            ("t1", "T1-Weighted", 0, 0),
+            ("swi", "SWI Magnitude", 0, 1),
+            ("flair", "FLAIR", 1, 0),
+            ("phase", "SWI Phase", 1, 1)
+        ]
+
+        # Create each viewport
+        for name, title, row, col in viewports:
+            group = self.createViewport(name, title)
+            view_grid.addWidget(group, row, col)
+
+        # Set uniform grid stretching
+        for i in range(2):
+            view_grid.setColumnStretch(i, 1)
+            view_grid.setRowStretch(i, 1)
+
+        # Create collapsible shading controls
+        self.shading_toggle = QPushButton("Show Shading Controls")
+        self.shading_toggle.setCheckable(True)
+        self.shading_toggle.setStyleSheet("""
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                border: none;
+                padding: 8px;
+                font-size: 11pt;
+                border-radius: 4px;
+            }
+            QPushButton:checked {
+                background-color: #0078D7;
+            }
+        """)
+
+        # Create shading grid
+        self.shading_grid = QGridLayout()
+        self.shading_grid.setSpacing(10)
+        self.shading_grid.addWidget(self.createModalityShaderPanel("t1"), 0, 0)
+        self.shading_grid.addWidget(self.createModalityShaderPanel("swi"), 0, 1)
+        self.shading_grid.addWidget(self.createModalityShaderPanel("flair"), 1, 0)
+        self.shading_grid.addWidget(self.createModalityShaderPanel("phase"), 1, 1)
+
+        # Hide shading controls initially
+        self.shading_container = QWidget()
+        self.shading_container.setLayout(self.shading_grid)
+        self.shading_container.setVisible(False)
+        self.shading_toggle.clicked.connect(self.shading_container.setVisible)
+
+        # Add all components to render panel
+        vlayout.addLayout(view_grid)
+        vlayout.addWidget(self.shading_toggle)
+        vlayout.addWidget(self.shading_container)
+        self.main_layout.addWidget(render_panel, stretch=1)
+
+    def createViewport(self, name, title):
+        """Create a viewport with maximize button"""
+        group = QGroupBox(title)
+        group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        group.setStyleSheet("""
+            QGroupBox {
+                font-size: 12pt;
+                font-weight: bold;
+                color: #FFFFFF;
+                border: 2px solid #404040;
+                border-radius: 6px;
+                padding: 10px;
+                background-color: #1E1E1E;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0 5px;
+            }
+        """)
+
+        # Create layout for viewport
+        group_layout = QVBoxLayout(group)
+        group_layout.setContentsMargins(5, 15, 5, 5)
+
+        # Add maximize button
+        maximize_btn = QToolButton()
+        maximize_btn.setText("⛶")
+        maximize_btn.setFixedSize(24, 24)
+        maximize_btn.setStyleSheet("""
+            QToolButton {
+                background-color: transparent;
+                color: white;
+                border: none;
+            }
+            QToolButton:hover {
+                background-color: #404040;
+            }
+        """)
         
-        # Case Information
+        # Create header layout
+        header_layout = QHBoxLayout()
+        header_layout.addStretch()
+        header_layout.addWidget(maximize_btn)
+        group_layout.addLayout(header_layout)
+
+        # Create frame for rendering
+        frame = QFrame()
+        frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        frame.setStyleSheet("""
+            QFrame {
+                background-color: #000000;
+                border: 1px solid #404040;
+                border-radius: 4px;
+            }
+        """)
+        frame_layout = QVBoxLayout(frame)
+        frame_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Store references
+        setattr(self, f"{name}_frame", frame)
+        setattr(self, f"{name}_layout", frame_layout)
+        
+        group_layout.addWidget(frame)
+        return group
+    
+    def addCaseInfo(self, layout):
+        """Create the case information section of the control panel."""
         case_info_group = self.create_group_box("Case Information")
         case_info_layout = QVBoxLayout(case_info_group)
         
-        # Subject ID
+        # Subject ID section
         subject_layout = QHBoxLayout()
         subject_label = QLabel("Subject:")
         subject_label.setStyleSheet("font-weight: bold; font-size: 11pt; color: #FFFFFF;")
@@ -109,62 +297,40 @@ class MainWindowUI(QMainWindow):
         subject_layout.addWidget(self.subject_id)
         subject_layout.addStretch()
         
-        # Session ID and Navigation
+        # Session navigation section
         session_layout = QHBoxLayout()
-
-        # Previous button
+        
+        # Navigation buttons
         self.prev_button = QPushButton("←")
-        self.prev_button.setStyleSheet("""
-            QPushButton {
-                background-color: #404040;
-                color: white;
-                border: none;
-                padding: 4px 8px;
-                font-size: 14pt;
-                border-radius: 4px;
-                min-width: 30px;
-            }
-            QPushButton:hover {
-                background-color: #505050;
-            }
-            QPushButton:pressed {
-                background-color: #303030;
-            }
-            QPushButton:disabled {
-                background-color: #2D2D2D;
-                color: #808080;
-            }
-        """)
+        self.next_button = QPushButton("→")
+        for button in [self.prev_button, self.next_button]:
+            button.setStyleSheet("""
+                QPushButton {
+                    background-color: #404040;
+                    color: white;
+                    border: none;
+                    padding: 4px 8px;
+                    font-size: 14pt;
+                    border-radius: 4px;
+                    min-width: 30px;
+                }
+                QPushButton:hover {
+                    background-color: #505050;
+                }
+                QPushButton:pressed {
+                    background-color: #303030;
+                }
+                QPushButton:disabled {
+                    background-color: #2D2D2D;
+                    color: #808080;
+                }
+            """)
 
         # Session label
         session_label = QLabel("Session:")
         session_label.setStyleSheet("font-weight: bold; font-size: 11pt; color: #FFFFFF;")
         self.session_id = QLabel()
         self.session_id.setStyleSheet("font-size: 11pt; color: #FFFFFF;")
-
-        # Next button
-        self.next_button = QPushButton("→")
-        self.next_button.setStyleSheet("""
-            QPushButton {
-                background-color: #404040;
-                color: white;
-                border: none;
-                padding: 4px 8px;
-                font-size: 14pt;
-                border-radius: 4px;
-                min-width: 30px;
-            }
-            QPushButton:hover {
-                background-color: #505050;
-            }
-            QPushButton:pressed {
-                background-color: #303030;
-            }
-            QPushButton:disabled {
-                background-color: #2D2D2D;
-                color: #808080;
-            }
-        """)
 
         session_layout.addWidget(self.prev_button)
         session_layout.addWidget(session_label)
@@ -175,8 +341,9 @@ class MainWindowUI(QMainWindow):
         case_info_layout.addLayout(subject_layout)
         case_info_layout.addLayout(session_layout)
         layout.addWidget(case_info_group)
-        
-        # View Settings
+
+    def addViewSettings(self, layout):
+        """Create the view settings section of the control panel."""
         view_group = self.create_group_box("View Settings")
         view_layout = QVBoxLayout(view_group)
         
@@ -230,8 +397,9 @@ class MainWindowUI(QMainWindow):
         """)
         view_layout.addWidget(self.reset_button)
         layout.addWidget(view_group)
-        
-        # Slice Thickness
+
+    def addThicknessControls(self, layout):
+        """Create the slice thickness control section."""
         thickness_group = self.create_group_box("Slice Thickness")
         thickness_layout = QVBoxLayout(thickness_group)
         
@@ -273,7 +441,13 @@ class MainWindowUI(QMainWindow):
         thickness_layout.addLayout(thickness_controls)
         layout.addWidget(thickness_group)
 
-        # Step size
+        # Connect the value change signal
+        self.thickness_slider.valueChanged.connect(
+            lambda value: self.thickness_value.setText(str(value))
+        )
+
+    def addStepControls(self, layout):
+        """Create the step size control section."""
         step_group = self.create_group_box("Step size")
         step_layout = QVBoxLayout(step_group)
         
@@ -314,8 +488,14 @@ class MainWindowUI(QMainWindow):
         step_controls.addWidget(self.step_value)
         step_layout.addLayout(step_controls)
         layout.addWidget(step_group)
-        
-        # Mark Scan
+
+        # Connect the value change signal
+        self.step_slider.valueChanged.connect(
+            lambda value: self.step_value.setText(str(value))
+        )
+
+    def addMarkScan(self, layout):
+        """Create the scan marking section."""
         mark_group = self.create_group_box("Mark Scan")
         mark_layout = QVBoxLayout(mark_group)
         
@@ -384,29 +564,9 @@ class MainWindowUI(QMainWindow):
         """)
         mark_layout.addWidget(self.submit_button)
         layout.addWidget(mark_group)
-        
-        # Controls Help
-        help_group = self.create_group_box("Controls")
-        help_layout = QVBoxLayout(help_group)
-        help_text = QLabel("""
-            <p><b>Scroll:</b> Change slice</p>
-            <p><b>Shift + Scroll:</b> Zoom</p>
-            <p><b>Left mouse:</b> Rotate</p>
-            <p><b>Middle mouse:</b> Pan</p>
-        """)
-        help_text.setStyleSheet("""
-            QLabel {
-                color: #FFFFFF;
-                font-size: 11pt;
-                line-height: 1.5;
-            }
-        """)
-        help_layout.addWidget(help_text)
-        layout.addWidget(help_group)
-        
-        layout.addStretch()
-        self.main_layout.addWidget(control_panel)
-        
+
+    def addMaskControls(self, layout):
+        """Create the mask controls section."""
         mask_group = self.create_group_box("Mask Controls")
         mask_layout = QVBoxLayout(mask_group)
 
@@ -544,14 +704,16 @@ class MainWindowUI(QMainWindow):
         prl_controls.addLayout(prl_header)
         prl_controls.addLayout(prl_slider_layout)
 
-        # Add controls to mask group
-        mask_layout.addLayout(lesion_controls)
-        mask_layout.addLayout(prl_controls)
+        # Add spacings between controls
+        mask_layout.addSpacing(10)
         
-        # Add mask group to main layout
-        layout.addWidget(mask_group)
+        # Add both control sets to the mask layout
+        mask_layout.addLayout(lesion_controls)
+        mask_layout.addSpacing(15)  # Add space between lesion and PRL controls
+        mask_layout.addLayout(prl_controls)
+        mask_layout.addSpacing(10)
 
-        # Connect opacity sliders to value labels
+        # Connect signals for opacity sliders
         self.lesion_opacity_slider.valueChanged.connect(
             lambda value: self.lesion_opacity_value.setText(f"{value/100:.1f}")
         )
@@ -559,51 +721,45 @@ class MainWindowUI(QMainWindow):
             lambda value: self.prl_opacity_value.setText(f"{value/100:.1f}")
         )
         
-        # Stereo Toggle
-        #self.stereo_button = QPushButton("Stereo OFF")
-        #self.stereo_button.setCheckable(True)
-        #self.stereo_button.setChecked(False)
-        #self.stereo_button.setStyleSheet("""
-        #    QPushButton {
-        #        background-color: #404040;
-        #        color: white;
-        #        border: 1px solid #707070;
-        #        border-radius: 4px;
-        #        font-size: 11pt;
-        #        padding: 4px 8px;
-        #    }
-        #    QPushButton:hover {
-        #        background-color: #505050;
-        #    }
-        #    QPushButton:checked {
-        #        background-color: #0078D7;
-        #    }
-        #""")
+        # Add the mask group to the main layout
+        layout.addWidget(mask_group)
 
-        # Connect the button click to a toggle method
-        #self.stereo_button.clicked.connect(self.toggleStereo)
-
-        #layout.addWidget(self.stereo_button)
-
-
-
+        # Store references for external access if needed
+        self.mask_controls = {
+            'lesion': {
+                'toggle': self.lesion_toggle,
+                'opacity_slider': self.lesion_opacity_slider,
+                'opacity_label': self.lesion_opacity_value
+            },
+            'prl': {
+                'toggle': self.prl_toggle,
+                'opacity_slider': self.prl_opacity_slider,
+                'opacity_label': self.prl_opacity_value
+            }
+        }
         
-
     def createModalityShaderPanel(self, modality_name):
         """
-        Create a group box with Ambient, Diffuse, Specular, and Specular Power
-        sliders for a specific modality. Store them in self.shader_sliders[modality_name].
+        Create a shader control panel for a specific modality with ambient, diffuse,
+        specular, and specular power controls.
+        
+        Args:
+            modality_name (str): Name of the modality (t1, swi, flair, phase)
+        
+        Returns:
+            QGroupBox: Grouped shader controls for the modality
         """
         group_box = self.create_group_box(f"{modality_name.upper()} Shading")
         layout = QVBoxLayout(group_box)
         layout.setSpacing(8)
 
-        # Prepare a sub-dict to hold references to the sliders
+        # Initialize storage for this modality's sliders
         self.shader_sliders[modality_name] = {}
 
-        def styled_slider():
-            s = QSlider(Qt.Horizontal)
-            s.setStyleSheet("""
+        def create_styled_slider():
+            """Create a consistently styled slider for shader controls"""
+            slider = QSlider(Qt.Horizontal)
+            slider.setStyleSheet("""
                 QSlider::groove:horizontal {
                     height: 8px;
                     background: #404040;
@@ -620,56 +776,47 @@ class MainWindowUI(QMainWindow):
                     background: #1984D8;
                 }
             """)
-            return s
+            return slider
 
-        # Ambient
-        ambient_layout = QHBoxLayout()
-        ambient_label = QLabel("Ambient:")
-        ambient_label.setStyleSheet("color: white; font-size: 11pt;")
-        ambient_slider = styled_slider()
-        ambient_slider.setRange(0, 100)   
-        ambient_slider.setValue(40)       # default = 0.40
-        ambient_layout.addWidget(ambient_label)
-        ambient_layout.addWidget(ambient_slider)
-        layout.addLayout(ambient_layout)
+        # Configure shader parameters
+        shader_params = [
+            ("Ambient", "ambient", 40),     # Default 0.40
+            ("Diffuse", "diffuse", 60),     # Default 0.60
+            ("Specular", "specular", 20),   # Default 0.20
+            ("Spec. Power", "spec_power", 10)  # Default 10
+        ]
 
-        # Diffuse
-        diffuse_layout = QHBoxLayout()
-        diffuse_label = QLabel("Diffuse:")
-        diffuse_label.setStyleSheet("color: white; font-size: 11pt;")
-        diffuse_slider = styled_slider()
-        diffuse_slider.setRange(0, 100)  
-        diffuse_slider.setValue(60)      # default = 0.60
-        diffuse_layout.addWidget(diffuse_label)
-        diffuse_layout.addWidget(diffuse_slider)
-        layout.addLayout(diffuse_layout)
+        # Create controls for each shader parameter
+        for label_text, param_name, default_value in shader_params:
+            param_layout = QHBoxLayout()
+            
+            # Create and style label
+            label = QLabel(f"{label_text}:")
+            label.setStyleSheet("color: white; font-size: 11pt;")
+            
+            # Create and configure slider
+            slider = create_styled_slider()
+            
+            # Set appropriate range based on parameter
+            if param_name == "spec_power":
+                slider.setRange(1, 50)
+            else:
+                slider.setRange(0, 100)
+            
+            slider.setValue(default_value)
+            
+            # Add to layout
+            param_layout.addWidget(label)
+            param_layout.addWidget(slider)
+            layout.addLayout(param_layout)
+            
+            # Store slider reference
+            self.shader_sliders[modality_name][param_name] = slider
 
-        # Specular
-        specular_layout = QHBoxLayout()
-        specular_label = QLabel("Specular:")
-        specular_label.setStyleSheet("color: white; font-size: 11pt;")
-        specular_slider = styled_slider()
-        specular_slider.setRange(0, 100) 
-        specular_slider.setValue(20)     # default = 0.20
-        specular_layout.addWidget(specular_label)
-        specular_layout.addWidget(specular_slider)
-        layout.addLayout(specular_layout)
-
-        # Specular Power
-        spec_power_layout = QHBoxLayout()
-        spec_power_label = QLabel("Spec. Power:")
-        spec_power_label.setStyleSheet("color: white; font-size: 11pt;")
-        spec_power_slider = styled_slider()
-        spec_power_slider.setRange(1, 50)  
-        spec_power_slider.setValue(10)
-        spec_power_layout.addWidget(spec_power_label)
-        spec_power_layout.addWidget(spec_power_slider)
-        layout.addLayout(spec_power_layout)
-
-        # Reset Button
-        reset_shader_layout = QHBoxLayout()
-        reset_shader_btn = QPushButton("Reset")
-        reset_shader_btn.setStyleSheet("""
+        # Create reset button with consistent styling
+        reset_layout = QHBoxLayout()
+        reset_btn = QPushButton("Reset")
+        reset_btn.setStyleSheet("""
             QPushButton {
                 background-color: #404040;
                 color: white;
@@ -682,119 +829,22 @@ class MainWindowUI(QMainWindow):
                 background-color: #505050;
             }
         """)
-        reset_shader_layout.addStretch()
-        reset_shader_layout.addWidget(reset_shader_btn)
-        layout.addLayout(reset_shader_layout)
+        reset_layout.addStretch()
+        reset_layout.addWidget(reset_btn)
+        layout.addLayout(reset_layout)
 
-        # Store references in dictionary
-        self.shader_sliders[modality_name]["ambient"] = ambient_slider
-        self.shader_sliders[modality_name]["diffuse"] = diffuse_slider
-        self.shader_sliders[modality_name]["specular"] = specular_slider
-        self.shader_sliders[modality_name]["spec_power"] = spec_power_slider
-        self.shader_sliders[modality_name]["reset_btn"] = reset_shader_btn
+        # Store reset button reference
+        self.shader_sliders[modality_name]["reset_btn"] = reset_btn
 
-        # Connect signals
-        ambient_slider.valueChanged.connect(partial(self.update_volume_lighting, modality_name))
-        diffuse_slider.valueChanged.connect(partial(self.update_volume_lighting, modality_name))
-        specular_slider.valueChanged.connect(partial(self.update_volume_lighting, modality_name))
-        spec_power_slider.valueChanged.connect(partial(self.update_volume_lighting, modality_name))
-        reset_shader_btn.clicked.connect(partial(self.reset_shading, modality_name))
+        # Connect all signals for this modality
+        for param_name in ["ambient", "diffuse", "specular", "spec_power"]:
+            slider = self.shader_sliders[modality_name][param_name]
+            slider.valueChanged.connect(
+                partial(self.update_volume_lighting, modality_name)
+            )
+        
+        reset_btn.clicked.connect(
+            partial(self.reset_shading, modality_name)
+        )
 
         return group_box
-
-    def createRenderPanel(self):
-        """Create the right panel with a 2x2 grid for volume views, and a separate 2x2 grid for shading."""
-        render_panel = QWidget()
-        render_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        # A vertical layout to hold:
-        #   - The 2x2 grid of volume frames
-        #   - The 2x2 grid of shading controls
-        vlayout = QVBoxLayout(render_panel)
-        vlayout.setSpacing(10)
-        vlayout.setContentsMargins(0, 0, 0, 0)
-
-        # First Grid: Volume Frames (2x2)
-        view_grid = QGridLayout()
-        view_grid.setSpacing(10)
-
-        viewports = [
-            ("t1",    "T1-Weighted",    0, 0),
-            ("swi",   "SWI Magnitude",  0, 1),
-            ("flair", "FLAIR",          1, 0),
-            ("phase", "SWI Phase",      1, 1)
-        ]
-        
-        for name, title, row, col in viewports:
-            group = QGroupBox(title)
-            group.setStyleSheet("""
-                QGroupBox {
-                    font-size: 12pt;
-                    font-weight: bold;
-                    color: #FFFFFF;
-                    border: 2px solid #404040;
-                    border-radius: 6px;
-                    padding: 10px;
-                    background-color: #1E1E1E;
-                }
-                QGroupBox::title {
-                    subcontrol-origin: margin;
-                    subcontrol-position: top left;
-                    padding: 0 5px;
-                }
-            """)
-            
-            group_layout = QVBoxLayout(group)
-            group_layout.setContentsMargins(5, 15, 5, 5)
-            
-            # The actual render frame for the volume
-            frame = QFrame(group)
-            frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            frame.setStyleSheet("""
-                QFrame {
-                    background-color: #000000;
-                    border: 1px solid #404040;
-                    border-radius: 4px;
-                }
-            """)
-            frame_layout = QVBoxLayout(frame)
-            frame_layout.setContentsMargins(0, 0, 0, 0)
-            
-            setattr(self, f"{name}_frame", frame)
-            setattr(self, f"{name}_layout", frame_layout)
-
-            group_layout.addWidget(frame)
-
-            # NOTE: We no longer add the shading panel here since we want a separate 2x2 grid below.
-
-            view_grid.addWidget(group, row, col)
-
-        # Make the volume grid expand equally
-        view_grid.setColumnStretch(0, 1)
-        view_grid.setColumnStretch(1, 1)
-        view_grid.setRowStretch(0, 1)
-        view_grid.setRowStretch(1, 1)
-
-        # Second Grid: Shading Controls (2x2)
-        shading_grid = QGridLayout()
-        shading_grid.setSpacing(10)
-
-        # Each cell is one modality's shading box
-        shading_grid.addWidget(self.createModalityShaderPanel("t1"),    0, 0)
-        shading_grid.addWidget(self.createModalityShaderPanel("swi"),   0, 1)
-        shading_grid.addWidget(self.createModalityShaderPanel("flair"), 1, 0)
-        shading_grid.addWidget(self.createModalityShaderPanel("phase"), 1, 1)
-
-        # Add both grids to the main vertical layout
-        vlayout.addLayout(view_grid)
-        vlayout.addLayout(shading_grid)
-
-        self.main_layout.addWidget(render_panel, stretch=1)
-
-        # Connect thickness/step sliders to their labels
-        self.thickness_slider.valueChanged.connect(
-            lambda value: self.thickness_value.setText(str(value))
-        )
-        self.step_slider.valueChanged.connect(
-            lambda value: self.step_value.setText(str(value))
-        )
