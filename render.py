@@ -269,10 +269,10 @@ class MRIViewer(MainWindowUI):
         volume_property = volume.GetProperty()
 
         # Retrieve slider values
-        ambient_slider = self.shader_sliders[modality_name]["ambient"]
-        diffuse_slider = self.shader_sliders[modality_name]["diffuse"]
-        specular_slider = self.shader_sliders[modality_name]["specular"]
-        spec_power_slider = self.shader_sliders[modality_name]["spec_power"]
+        ambient_slider = self.lighting_sliders[modality_name]["ambient"]
+        diffuse_slider = self.lighting_sliders[modality_name]["diffuse"]
+        specular_slider = self.lighting_sliders[modality_name]["specular"]
+        spec_power_slider = self.lighting_sliders[modality_name]["spec_power"]
 
         ambient_val = ambient_slider.value() / 100.0
         diffuse_val = diffuse_slider.value() / 100.0
@@ -310,10 +310,10 @@ class MRIViewer(MainWindowUI):
         volume_property.SetSpecular(0.2)
         volume_property.SetSpecularPower(0.1)
 
-        self.shader_sliders[modality_name]["ambient"].setValue(40)
-        self.shader_sliders[modality_name]["diffuse"].setValue(60)
-        self.shader_sliders[modality_name]["specular"].setValue(20)
-        self.shader_sliders[modality_name]["spec_power"].setValue(10)
+        self.lighting_sliders[modality_name]["ambient"].setValue(40)
+        self.lighting_sliders[modality_name]["diffuse"].setValue(60)
+        self.lighting_sliders[modality_name]["specular"].setValue(20)
+        self.lighting_sliders[modality_name]["spec_power"].setValue(10)
 
         self.render_all()
         

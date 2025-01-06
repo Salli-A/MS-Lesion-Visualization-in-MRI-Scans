@@ -10,8 +10,8 @@ from PyQt5.QtGui import QFont, QPalette, QColor
 class MainWindowUI(QMainWindow):
     def __init__(self):
         super().__init__()
-        # Dictionary to store references to each modality's shader sliders
-        self.shader_sliders = {}
+        # Dictionary to store references to each modality's lighting sliders
+        self.lighting_sliders = {}
         self.setupUi()
 
     def setupUi(self):
@@ -589,17 +589,17 @@ class MainWindowUI(QMainWindow):
 
         
 
-    def createModalityShaderPanel(self, modality_name):
+    def createModalityLightingPanel(self, modality_name):
         """
         Create a group box with Ambient, Diffuse, Specular, and Specular Power
-        sliders for a specific modality. Store them in self.shader_sliders[modality_name].
+        sliders for a specific modality. Store them in self.lighting_sliders[modality_name].
         """
-        group_box = self.create_group_box(f"{modality_name.upper()} Shading")
+        group_box = self.create_group_box(f"{modality_name.upper()} Lighting")
         layout = QVBoxLayout(group_box)
         layout.setSpacing(8)
 
         # Prepare a sub-dict to hold references to the sliders
-        self.shader_sliders[modality_name] = {}
+        self.lighting_sliders[modality_name] = {}
 
         def styled_slider():
             s = QSlider(Qt.Horizontal)
@@ -667,9 +667,9 @@ class MainWindowUI(QMainWindow):
         layout.addLayout(spec_power_layout)
 
         # Reset Button
-        reset_shader_layout = QHBoxLayout()
-        reset_shader_btn = QPushButton("Reset")
-        reset_shader_btn.setStyleSheet("""
+        reset_lighting_layout = QHBoxLayout()
+        reset_lighting_btn = QPushButton("Reset")
+        reset_lighting_btn.setStyleSheet("""
             QPushButton {
                 background-color: #404040;
                 color: white;
@@ -682,23 +682,23 @@ class MainWindowUI(QMainWindow):
                 background-color: #505050;
             }
         """)
-        reset_shader_layout.addStretch()
-        reset_shader_layout.addWidget(reset_shader_btn)
-        layout.addLayout(reset_shader_layout)
+        reset_lighting_layout.addStretch()
+        reset_lighting_layout.addWidget(reset_lighting_btn)
+        layout.addLayout(reset_lighting_layout)
 
         # Store references in dictionary
-        self.shader_sliders[modality_name]["ambient"] = ambient_slider
-        self.shader_sliders[modality_name]["diffuse"] = diffuse_slider
-        self.shader_sliders[modality_name]["specular"] = specular_slider
-        self.shader_sliders[modality_name]["spec_power"] = spec_power_slider
-        self.shader_sliders[modality_name]["reset_btn"] = reset_shader_btn
+        self.lighting_sliders[modality_name]["ambient"] = ambient_slider
+        self.lighting_sliders[modality_name]["diffuse"] = diffuse_slider
+        self.lighting_sliders[modality_name]["specular"] = specular_slider
+        self.lighting_sliders[modality_name]["spec_power"] = spec_power_slider
+        self.lighting_sliders[modality_name]["reset_btn"] = reset_lighting_btn
 
         # Connect signals
         ambient_slider.valueChanged.connect(partial(self.update_volume_lighting, modality_name))
         diffuse_slider.valueChanged.connect(partial(self.update_volume_lighting, modality_name))
         specular_slider.valueChanged.connect(partial(self.update_volume_lighting, modality_name))
         spec_power_slider.valueChanged.connect(partial(self.update_volume_lighting, modality_name))
-        reset_shader_btn.clicked.connect(partial(self.reset_shading, modality_name))
+        reset_lighting_btn.clicked.connect(partial(self.reset_shading, modality_name))
 
         return group_box
 
@@ -780,10 +780,10 @@ class MainWindowUI(QMainWindow):
         shading_grid.setSpacing(10)
 
         # Each cell is one modality's shading box
-        shading_grid.addWidget(self.createModalityShaderPanel("t1"),    0, 0)
-        shading_grid.addWidget(self.createModalityShaderPanel("swi"),   0, 1)
-        shading_grid.addWidget(self.createModalityShaderPanel("flair"), 1, 0)
-        shading_grid.addWidget(self.createModalityShaderPanel("phase"), 1, 1)
+        shading_grid.addWidget(self.createModalityLightingPanel("t1"),    0, 0)
+        shading_grid.addWidget(self.createModalityLightingPanel("swi"),   0, 1)
+        shading_grid.addWidget(self.createModalityLightingPanel("flair"), 1, 0)
+        shading_grid.addWidget(self.createModalityLightingPanel("phase"), 1, 1)
 
         # Add both grids to the main vertical layout
         vlayout.addLayout(view_grid)
