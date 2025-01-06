@@ -37,7 +37,7 @@ class MRIViewer(MainWindowUI):
         # Timer for rendering sync
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.render_all)
-        self.timer.start(2)  # msec per frame
+        self.timer.start(8)  # msec per frame
         
         self.show()
     
@@ -231,6 +231,7 @@ class MRIViewer(MainWindowUI):
             # Update Default UI Buttons
             self.axial_button.setChecked(True)
             self.mri_toggle.setChecked(True)
+
             self.change_slicing()
             self.update_stepsize()
             self.update_thickness()
@@ -269,6 +270,9 @@ class MRIViewer(MainWindowUI):
         
         # Conncct step size controls
         self.step_slider.valueChanged.connect(self.update_stepsize)
+
+        # connect animation button
+        self.animate_button.clicked.connect(self.toggle_animation)
 
         # Set axial view as default
         self.axial_button.setChecked(True)
@@ -353,7 +357,99 @@ class MRIViewer(MainWindowUI):
         """Update the enabled state of navigation buttons"""
         self.prev_button.setEnabled(self.current_session_index > 0)
         self.next_button.setEnabled(self.current_session_index < len(self.session_dirs) - 1)
-    
+
+    def toggle_animation(self, checked):
+        """
+        Called when the user clicks the "Make Animation" button.
+        'checked' is True if toggled on, False if toggled off.
+        """
+        if checked:
+            # Build the surface if not already built
+            if not hasattr(self, 'surface_actor'):
+                self.build_surface_actor()
+            
+
+            # Make sure surface actor is visible
+            self.surface_actor.SetVisibility(True)
+
+            # Start a separate QTimer for animation
+            self.animation_angle = 0
+            self.animation_timer = QTimer(self)
+            self.animation_timer.timeout.connect(self.rotate_surface)
+            self.animation_timer.start(50)
+
+            # Set sagittal view
+            self.sagittal_button.setChecked(True)
+            self.sagittal_button.setChecked(True)
+            # Remove MRi & Mask
+            self.mri_toggle.setChecked(False)
+            self.lesion_toggle.setChecked(False)
+            self.prl_toggle.setChecked(False)
+            self.toggle_lesion_mask(self.lesion_toggle.isChecked())
+            self.toggle_prl_mask(self.prl_toggle.isChecked())
+            self.toggle_mri_visibility(self.mri_toggle.isChecked())
+            self.change_slicing()
+        else:
+            # Stop animation
+            if hasattr(self, 'animation_timer'):
+                self.animation_timer.stop()
+                self.animation_timer = None
+                self.surface_actor.SetVisibility(False)
+                self.mri_toggle.setChecked(True)
+                self.lesion_toggle.setChecked(True)
+                self.prl_toggle.setChecked(True)
+                self.toggle_lesion_mask(self.lesion_toggle.isChecked())
+                self.toggle_prl_mask(self.prl_toggle.isChecked())
+                self.toggle_mri_visibility(self.mri_toggle.isChecked())
+                self.toggle_mri_visibility(self.mri_toggle.isChecked())
+                self.render_all()
+
+    def build_surface_actor(self):
+        """
+        Performs a simple marching cubes surface reconstruction from the T1 volume data
+        and sets the actor's origin to its own center, so it rotates around itself.
+        """
+        try:
+            # Get the T1 image data pipeline
+            t1_port = self.t1_renderer.reader.GetOutputPort()
+
+            # Create a marching cubes filter
+            isoSurface = vtk.vtkMarchingCubes()
+            isoSurface.SetInputConnection(t1_port)
+            isoSurface.SetValue(0, 500)  # Example threshold, adjust as needed
+            isoSurface.Update()
+
+            # Get the surface data to compute its center
+            poly_data = isoSurface.GetOutput()
+            center = poly_data.GetCenter()  # (x, y, z) of geometry center
+
+            # Create a polydata mapper
+            surface_mapper = vtk.vtkPolyDataMapper()
+            surface_mapper.SetInputConnection(isoSurface.GetOutputPort())
+
+            # Create an actor
+            self.surface_actor = vtk.vtkActor()
+            self.surface_actor.SetMapper(surface_mapper)
+            self.surface_actor.GetProperty().SetColor(1.0, 1.0, 0.0)  # Yellow surface
+
+            # **Important**: set the actor’s origin to its own center
+            self.surface_actor.SetOrigin(center)
+
+            # Add the actor to the T1 renderer
+            self.t1_renderer.renderer.AddActor(self.surface_actor)
+
+        except Exception as e:
+            print("Error building surface actor:", e)
+
+    def rotate_surface(self):
+        """
+        Rotate the surface actor a few degrees, then re-render.
+        """
+        if hasattr(self, 'surface_actor'):
+            self.surface_actor.RotateY(5)  # Rotate 5 degrees around Y-axis
+            self.render_all()
+
+        
 
     def render_modalities(self, filenames):
         """Render all modalities with enhanced visualization."""

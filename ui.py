@@ -140,6 +140,7 @@ class MainWindowUI(QMainWindow):
         self.addStepControls(layout)
         self.addMarkScan(layout)
         self.addMaskControls(layout)
+        self.addAnimationButton(layout)
 
         # Add stretch at the end
         layout.addStretch()
@@ -772,6 +773,31 @@ class MainWindowUI(QMainWindow):
                 'opacity_label': self.prl_opacity_value
             }
         }
+
+    def addAnimationButton(self, layout):
+        self.animate_button = QPushButton("Make Animation")
+        self.animate_button.setCheckable(True)
+        self.animate_button.setStyleSheet("""
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                border: none;
+                padding: 8px;
+                font-size: 11pt;
+                border-radius: 4px;
+            }
+            QPushButton:checked {
+                background-color: #0078D7;
+            }
+            QPushButton:hover {
+                background-color: #505050;
+            }
+            QPushButton:checked:hover {
+                background-color: #1984D8;
+            }
+            """)
+        layout.addWidget(self.animate_button)
+
         
     def createModalityShaderPanel(self, modality_name):
         """
