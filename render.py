@@ -114,7 +114,7 @@ class MRIViewer(MainWindowUI):
             dict: Mapping of modality to file path
         """
         found_files = {}
-        for modality in self.modalities:
+        for modality in modalities:
             # Define file patterns to search for each modality
             if modality == 't1':
                 pattern = os.path.join(session_path, f"*Lreg_t1.nii.gz")
@@ -178,7 +178,7 @@ class MRIViewer(MainWindowUI):
             self.current_session_index = index
             
             # Find all matching files
-            found_files = self.find_image_files(full_session_path)
+            found_files = self.find_image_files(full_session_path, self.modalities)
             
             # Store the files in order
             self.files = [found_files[mod] for mod in self.modalities]
@@ -228,9 +228,6 @@ class MRIViewer(MainWindowUI):
         # Connect thickness controls
         self.thickness_slider.valueChanged.connect(self.update_thickness)
 
-        # Conncct step size controls
-        self.step_slider.valueChanged.connect(self.update_stepsize)
-
         # Set axial view as default
         self.axial_button.setChecked(True)
         
@@ -252,9 +249,9 @@ class MRIViewer(MainWindowUI):
         """Update the enabled state of navigation buttons"""
         self.prev_button.setEnabled(self.current_session_index > 0)
         self.next_button.setEnabled(self.current_session_index < len(self.session_dirs) - 1)
+    
 
     def render_modalities(self, filenames):
-      
         """Render all modalities with enhanced visualization."""
         try:
             # Set up the slice planes
@@ -271,7 +268,7 @@ class MRIViewer(MainWindowUI):
                 filename=filenames[0],
                 modality='t1'
             )
-            self.t1_window, self.t1_iren, self.t1_volume = self.t1_renderer.get_window_and_interactor()
+            self.t1_window, self.t1_iren = self.t1_renderer.get_window_and_interactor()
             self.SlicePlanes.addRenderer(self.t1_renderer)
             
             # FLAIR
@@ -282,7 +279,7 @@ class MRIViewer(MainWindowUI):
                 filename=filenames[1],
                 modality='flair'
             )
-            self.flair_window, self.flair_iren, self.flair_volume = self.flair_renderer.get_window_and_interactor()
+            self.flair_window, self.flair_iren = self.flair_renderer.get_window_and_interactor()
             self.SlicePlanes.addRenderer(self.flair_renderer)
             
             # SWI Magnitude
@@ -293,7 +290,7 @@ class MRIViewer(MainWindowUI):
                 filename=filenames[2],
                 modality='swi_mag'
             )
-            self.swi_window, self.swi_iren, self.swi_volume = self.swi_renderer.get_window_and_interactor()
+            self.swi_window, self.swi_iren = self.swi_renderer.get_window_and_interactor()
             self.SlicePlanes.addRenderer(self.swi_renderer)
             
             # SWI Phase
@@ -304,7 +301,7 @@ class MRIViewer(MainWindowUI):
                 filename=filenames[3],
                 modality='swi_phase'
             )
-            self.phase_window, self.phase_iren, self.phase_volume = self.phase_renderer.get_window_and_interactor()
+            self.phase_window, self.phase_iren = self.phase_renderer.get_window_and_interactor()
             self.SlicePlanes.addRenderer(self.phase_renderer)
             
             # Initialize slice planes
@@ -412,67 +409,9 @@ class MRIViewer(MainWindowUI):
     def update_thickness(self):
         """Update slice thickness with enhanced visualization."""
         thickness = self.thickness_slider.value()
-        self.SlicePlanes.setSliceThickness(thickness)
-        self.render_all()
-      
-    def update_stepsize(self):
-        """Update slice thickness"""
-        step_size = self.step_slider.value()
-        self.SlicePlanes.setStepSize(step_size)
-    
-    def update_volume_lighting(self, modality_name):
-        """
-        Called whenever a lighting slider changes for a given modality.
-        We retrieve that modality's volume, get its property,
-        then read the slider values from self.shader_sliders[modality_name].
-        """
-        volume = getattr(self, f"{modality_name}_volume", None)
-
-        volume_property = volume.GetProperty()
-
-        ambient_slider  = self.shader_sliders[modality_name]["ambient"]
-        diffuse_slider  = self.shader_sliders[modality_name]["diffuse"]
-        specular_slider = self.shader_sliders[modality_name]["specular"]
-        spec_power_slider = self.shader_sliders[modality_name]["spec_power"]
-
-        ambient_val  = ambient_slider.value() / 100.0
-        diffuse_val  = diffuse_slider.value() / 100.0
-        specular_val = specular_slider.value() / 100.0
-        spec_pow_val = float(spec_power_slider.value())
-
-        volume_property.SetAmbient(ambient_val)
-        volume_property.SetDiffuse(diffuse_val)
-        volume_property.SetSpecular(specular_val)
-        volume_property.SetSpecularPower(spec_pow_val)
-
-        self.render_all()
-        
-
-    def reset_shading(self, modality_name):
-        """
-        Resets the shading parameters for the given modality, or for all modalities
-        if 'modality_name' is None.
-
-        :param modality_name: One of ['t1', 'flair', 'swi', 'phase'] or None
-        """
-
-        volume = getattr(self, f"{modality_name}_volume", None)
-        volume_property = volume.GetProperty()
-
-        # Reset the volume's shading
-        volume_property = volume.GetProperty()
-
-        volume_property.SetAmbient(0.4)
-        volume_property.SetDiffuse(0.6)
-        volume_property.SetSpecular(0.2)
-        volume_property.SetSpecularPower(0.1)
-
-        self.shader_sliders[modality_name]["ambient"].setValue(40)
-        self.shader_sliders[modality_name]["diffuse"].setValue(60)
-        self.shader_sliders[modality_name]["specular"].setValue(20)
-        self.shader_sliders[modality_name]["spec_power"].setValue(10)
-
-        self.render_all()
+        if hasattr(self, 'SlicePlanes'):
+            self.SlicePlanes.setSliceThickness(thickness)
+        self.render_all()  # Ensure all views are updated
 
     def submit(self):
         """Handle form submission"""
