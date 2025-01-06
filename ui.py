@@ -14,6 +14,7 @@ class MainWindowUI(QMainWindow):
         self.lighting_sliders = {}
         self.control_panel_visible = True
         self.shading_visible = False
+        self.animation_window = None  # Store reference to animation window
         self.setupUi()
 
     def setupUi(self):
@@ -341,6 +342,26 @@ class MainWindowUI(QMainWindow):
         case_info_layout.addLayout(subject_layout)
         case_info_layout.addLayout(session_layout)
         layout.addWidget(case_info_group)
+        
+        # Add animation button
+        self.animation_button = QPushButton("Show Tumor Progression")
+        self.animation_button.setStyleSheet("""
+            QPushButton {
+                background-color: #0078D7;
+                color: white;
+                border: none;
+                padding: 8px;
+                font-size: 11pt;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #1984D8;
+            }
+            QPushButton:pressed {
+                background-color: #006CC1;
+            }
+        """)
+        case_info_layout.addWidget(self.animation_button)
 
     def addViewSettings(self, layout):
         """Create the view settings section of the control panel."""

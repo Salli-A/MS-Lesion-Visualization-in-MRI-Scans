@@ -1,67 +1,100 @@
-# MS-Lesion-Visualization-in-MRI-Scans
+# MRI Viewer
 
-## Project should include
-- 3D visualization
-- surface reconstruction and rendering methods
-- volume rendering methods
-- interaction methods
-- fused visualization of different modalities or features
-- stereo rendering
-- animation
-- a GUI for the application
+A sophisticated medical imaging application for visualizing and analyzing multi-modal MRI scans with advanced visualization capabilities and tumor progression tracking.
 
-## Needs to be done:
+## Features
 
-- Fix the reading of image files.
-- Change camera view with coronal/axial (look into findBounds and setSLiceDirection on slice_interactor.py)
-- Fix rotations of swi and phase (not orientated in the same way as t1 and flair)
-    - Applying userTransformations changes slicing plane rotation as well (causing a mix up between axial, coronal, sagittal between modalities - seen by putting true on swi_phase_modality in renderPlaneVolume),
-     possible fixes:
-        - Seperate handling of t1/flair and swi/phase with seperate volume renders and slice interactor functions?
-        - Apply rotation/ change axis before inserting into rendering pipeline?
-    - Make sure that the modalities are registered since the SWI/phase had different orientation?
-- Fix color and opacity transfer functions for modalities
-    - Seperate transfer functions for each modality
-    - Automatic based on histogram? Adjustable (pehaps could be good to do on per slice basis?)?
-- Needs animation (maybe the way the camera sync is done qualifies as an animation as it makes use of timers?)
-    - Animation of lesions growth (needs the lesion mask development) 
-- Needs surface reconstruction (Perhaps of the the lesion mask?)
-- Fused visulization across modalities (phase omdatlity with swi?) or add features derived from the scans (gradients or derivatives?)
-- Change step sice, currently always thickness/2 (seperate step size from setSliceThickness in slice_interactor.py)
-- Create stero to [CrystalEyes] - double check in the slides which stereo rendering method (just needds to be added with SetStereoTypeToCrystalEyes() and perhaps adding parameters for distance from screen etc.)
-- Add scan to file (eg. csv) instead of just printing
+- **Multi-Modal Visualization**: Simultaneous viewing of T1, FLAIR, SWI Magnitude, and SWI Phase images
+- **Dynamic Slice Navigation**: Interactive slice-by-slice navigation with adjustable thickness
+- **Advanced Rendering**: GPU-accelerated volume rendering with customizable lighting and shading
+- **Mask Overlays**: Support for lesion and PRL (Perivascular Rim Lesions) mask visualization
+- **Tumor Progression Animation**: Chronological visualization of tumor development across sessions
+- **Synchronized Views**: All modalities remain synchronized during navigation and zooming
+- **Quality Control**: Built-in tools for marking scan quality and annotating findings
+- **Dark Theme**: Eye-friendly interface optimized for medical imaging
 
-Perhaps:
-- Change basic control scheme from vtkInteractorStyleTrackballCamera to not allow for rotation, only zoom and paning.
-    - vtkInteractorStyleImage? (should only need to change in the SLiceInteractor class in slicer_interactor.py)
-    - Would need option to change "sides"
+## Usage
 
+Launch the viewer by providing a subject directory:
 
+```bash
+python render.py /path/to/subject/directory
+```
 
-## MVis.ui
-Qt Designer UI.
+The directory should contain session folders with the following file structure:
+```
+subject/
+├── ses-20230501/
+│   ├── *Lreg_t1.nii.gz
+│   ├── *Lreg_flair.nii.gz
+│   ├── *Lreg_swiMag.nii.gz
+│   ├── *Lreg_swiPhase.nii.gz
+│   ├── *Lreg_lesionmask.nii.gz
+│   └── *Lreg_PRLmask.nii.gz
+└── ses-20230801/
+    └── ...
+```
 
-## render.py
-Code for rendering all modalaties in the Qt UI.
+Note: Session folders should follow the format `ses-YYYYMMDD` for proper chronological ordering in the tumor progression animation.
 
-- Synced camera across modalities
-- Volume slices
-- Axial, Coronal, Sagittal views
-- Adjustable slice thickness
-- Shared slicing plane across modalities
-- Reset view button
-- Fields for marking scans (PRL, CVS, bad scan, text field)
-- Control instructions
+## Controls
 
+### Main Viewer
+- **Mouse Wheel**: Navigate through slices
+- **Shift + Mouse Wheel**: Zoom in/out
+- **Left Mouse**: Rotate view
+- **Middle Mouse**: Pan view
+- **Right Mouse**: Window/level adjustment
 
-## volume_multimodal.py
-Function for the rendering pipeline for all modalities for simplicity. Might needs seperate functions. 
+### Tumor Animation Window
+- **Play/Pause**: Control animation playback
+- **Timeline Slider**: Manually select specific timepoints
+- **Speed Control**: Adjust animation playback speed
+- **Frame Counter**: Track progression through the sequence
 
-Commit 508c511243ffdb0483074662855e0f1113eced8b had seperate functions (the only difference was between t1/flair and swi/phase with rotations and transfer functions), was deleted for simplicity.
+## Interface Components
 
-## slice_interactor.py
-Classes for tracking shared slicing and bounds across modalities, and for interacting with it using interactor for each modalities.
+- **View Settings**: Toggle between axial, coronal, and sagittal views
+- **Slice Controls**: Adjust slice thickness and step size
+- **Mask Controls**: Toggle visibility and opacity of lesion/PRL masks
+- **Lighting Controls**: Customize volume rendering appearance
+- **Case Navigation**: Browse through multiple scanning sessions
+- **Quality Markers**: Flag scans for quality issues and add notes
+- **Tumor Animation**: Launch chronological visualization of tumor progression
 
-## histogram_plot.py
-Code for viewing histogram across modalities. Just for viewing the data for comparison.
+## Tumor Progression Visualization
+
+The tumor animation feature provides:
+- Chronological display of tumor development across scanning sessions
+- Interactive timeline control for detailed analysis
+- Adjustable playback speed for presentation or analysis
+- Automatic volume rendering optimization for tumor visualization
+- Frame-by-frame navigation capabilities
+- Consistent spatial registration across timepoints
+
+## Technical Details
+
+- Built with PyQt5 for the user interface
+- Uses VTK for 3D rendering and visualization
+- Supports NIFTI format medical images
+- Implements GPU-accelerated volume rendering
+- Features synchronized multi-planar reconstruction
+- Automatic chronological ordering of scanning sessions
+
+## Project Structure
+
+- `ui.py`: Main user interface implementation
+- `render.py`: Core rendering and application logic
+- `volume_multimodal.py`: Volume rendering and transfer function management
+- `slice_interactor.py`: Slice navigation and interaction handling
+- `mask_overlay.py`: Mask visualization and management
+- `tumor_animation.py`: Tumor progression animation implementation
+
+## Main Requirements
+
+- Python 3.7+
+- PyQt5
+- VTK 9.0+
+- NumPy
+- nibabel
 

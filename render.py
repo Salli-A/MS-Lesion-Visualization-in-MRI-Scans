@@ -11,6 +11,7 @@ from slice_interactor import SliceInteractor, SlicePlanes
 from volume_multimodal import VolumeRenderer
 from ui import MainWindowUI
 from mask_overlay import MaskOverlay
+from tumor_animation import TumorAnimationWindow
 
 class MRIViewer(MainWindowUI):
     def __init__(self, base_path):
@@ -34,14 +35,16 @@ class MRIViewer(MainWindowUI):
         # Connect mask control signals
         self.connect_mask_controls()
         
+        self.animation_button.clicked.connect(self.show_tumor_animation)
+        
         # Timer for rendering sync
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.render_all)
-        self.timer.start(2)  # msec per frame
+        self.timer.start(8)  # msec per frame
         
         self.show()
     
-    
+
     def setup_mask_overlay(self, session_path):
         """Set up mask overlay for current session."""
         try:
@@ -617,6 +620,64 @@ class MRIViewer(MainWindowUI):
         
         # Force render update
         self.render_all()
+        
+    def show_tumor_animation(self):
+        """
+        Launch the tumor progression animation window with chronologically sorted tumor masks.
+        Files are sorted based on session dates (YYYYMMDD) to show proper tumor progression over time.
+        """
+        try:
+            # Create a list to store tuples of (session_date, file_path)
+            tumor_data = []
+            
+            for session_dir in self.session_dirs:
+                # Extract the date from session directory (after 'ses-')
+                session_date = session_dir[4:]  # Gets YYYYMMDD portion
+                
+                # Find tumor mask in this session
+                session_path = os.path.join(self.base_path, session_dir)
+                mask_pattern = os.path.join(session_path, "*Lreg_lesionmask.nii.gz")
+                matches = glob.glob(mask_pattern)
+                
+                if matches:
+                    # Store tuple of (date, file_path) for sorting
+                    tumor_data.append((session_date, matches[0]))
+                    print(f"Found tumor mask for session {session_date}")
+            
+            if not tumor_data:
+                raise FileNotFoundError("No tumor mask files found in any session")
+            
+            # Sort tumor files by session date
+            # Since we store YYYYMMDD as strings, simple string sorting works for chronological order
+            tumor_data.sort(key=lambda x: x[0])
+            
+            # Extract just the file paths in chronological order
+            tumor_files = [file_path for _, file_path in tumor_data]
+            
+            # Print the chronological sequence for verification
+            print("\nTumor masks loaded in chronological order:")
+            for date, file in tumor_data:
+                formatted_date = f"{date[:4]}-{date[4:6]}-{date[6:]}"
+                print(f"  {formatted_date}: {os.path.basename(file)}")
+            
+            # Create new window instance every time
+            if self.animation_window:
+                self.animation_window.cleanup()
+                self.animation_window.deleteLater()
+            
+            # Pass the chronologically sorted files to the animation window
+            self.animation_window = TumorAnimationWindow(self, tumor_files)
+            self.animation_window.show()
+            self.animation_window.raise_()
+            self.animation_window.activateWindow()
+            
+        except Exception as e:
+            print(f"Error launching animation window: {str(e)}")
+            QMessageBox.warning(
+                self,
+                "Animation Error",
+                f"Could not load tumor progression animation: {str(e)}"
+            )
 
 def main():
     if len(sys.argv) != 2:
