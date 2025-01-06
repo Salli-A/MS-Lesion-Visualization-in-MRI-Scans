@@ -268,7 +268,7 @@ class MRIViewer(MainWindowUI):
                 filename=filenames[0],
                 modality='t1'
             )
-            self.t1_window, self.t1_iren = self.t1_renderer.get_window_and_interactor()
+            self.t1_window, self.t1_iren, self.t1_volume  = self.t1_renderer.get_window_and_interactor()
             self.SlicePlanes.addRenderer(self.t1_renderer)
             
             # FLAIR
@@ -279,7 +279,7 @@ class MRIViewer(MainWindowUI):
                 filename=filenames[1],
                 modality='flair'
             )
-            self.flair_window, self.flair_iren = self.flair_renderer.get_window_and_interactor()
+            self.flair_window, self.flair_iren, self.flair_volume = self.flair_renderer.get_window_and_interactor()
             self.SlicePlanes.addRenderer(self.flair_renderer)
             
             # SWI Magnitude
@@ -290,7 +290,7 @@ class MRIViewer(MainWindowUI):
                 filename=filenames[2],
                 modality='swi_mag'
             )
-            self.swi_window, self.swi_iren = self.swi_renderer.get_window_and_interactor()
+            self.swi_window, self.swi_iren, self.swi_volume  = self.swi_renderer.get_window_and_interactor()
             self.SlicePlanes.addRenderer(self.swi_renderer)
             
             # SWI Phase
@@ -301,7 +301,7 @@ class MRIViewer(MainWindowUI):
                 filename=filenames[3],
                 modality='swi_phase'
             )
-            self.phase_window, self.phase_iren = self.phase_renderer.get_window_and_interactor()
+            self.phase_window, self.phase_iren, self.phase_volume = self.phase_renderer.get_window_and_interactor()
             self.SlicePlanes.addRenderer(self.phase_renderer)
             
             # Initialize slice planes

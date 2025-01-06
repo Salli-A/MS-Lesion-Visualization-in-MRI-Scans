@@ -196,7 +196,7 @@ class VolumePropertyManager:
 class VolumeRenderer:
     """Handles 3D volume rendering of NIFTI images in a Qt widget with enhanced visualization."""
     
-    def __init__(self, viewer_instance, frame, layout, filename, show_bounds=True, modality=None):
+    def __init__(self, viewer_instance, frame, layout, filename, show_bounds=False, modality=None):
         """
         Initialize the volume renderer with enhanced visualization capabilities.
         
@@ -379,6 +379,7 @@ class VolumeRenderer:
         
     def update_volume_property(self, thickness):
         """Update volume property when slice thickness changes."""
+        
         if hasattr(self, 'volume') and self.modality:
             new_property = self.property_manager.create_volume_property(thickness)
             self.volume.SetProperty(new_property)
@@ -386,4 +387,4 @@ class VolumeRenderer:
         
     def get_window_and_interactor(self):
         """Return render window and interactor for external use."""
-        return self.window, self.interactor
+        return self.window, self.interactor, self.volume
