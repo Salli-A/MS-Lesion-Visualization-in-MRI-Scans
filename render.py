@@ -228,9 +228,12 @@ class MRIViewer(MainWindowUI):
             # Re-render the views
             self.render_modalities(self.files)
             
-            # Set default view to axial
+            # Update Default UI Buttons
             self.axial_button.setChecked(True)
+            self.mri_toggle.setChecked(True)
             self.change_slicing()
+            self.update_stepsize()
+            self.update_thickness()
             
             # Set up mask overlay for new session
             self.setup_mask_overlay(full_session_path)
@@ -269,6 +272,7 @@ class MRIViewer(MainWindowUI):
 
         # Set axial view as default
         self.axial_button.setChecked(True)
+        
         
     def update_volume_lighting(self, modality_name):
         """
@@ -594,9 +598,9 @@ class MRIViewer(MainWindowUI):
         Uses volume visibility instead of opacity manipulation to avoid texture size issues.
         """
         if checked:
-            self.mri_toggle.setText("Show MRI + Masks")
-        else:
             self.mri_toggle.setText("Show Masks Only")
+        else:
+            self.mri_toggle.setText("Show MRI + Masks")
             
         # Update visibility for all modality volumes
         volumes = [
