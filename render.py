@@ -239,16 +239,12 @@ class MRIViewer(MainWindowUI):
         Updates the lighting properties of the volume associated with the given modality.
         Retrieves the volume, adjusts its lighting properties based on the sliders, and re-renders.
         """
-        print("Updating volume lighting")
         # Retrieve the volume
         volume = getattr(self, f"{modality_name}_volume", None)
         if volume is None:
             raise ValueError(f"No volume found for modality: {modality_name}")
-
         # Retrieve the volume property
         volume_property = volume.GetProperty()
-        if not isinstance(volume_property, vtk.vtkVolumeProperty):
-            raise TypeError(f"Invalid property type for volume: {type(volume_property)}")
 
         # Retrieve slider values
         ambient_slider = self.shader_sliders[modality_name]["ambient"]
