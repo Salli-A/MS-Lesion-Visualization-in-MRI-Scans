@@ -234,6 +234,28 @@ class MRIViewer(MainWindowUI):
         # Set axial view as default
         self.axial_button.setChecked(True)
 
+    """
+    def toggleStereo(self, checked):
+        if checked:
+            self.stereo_button.setText("Stereo ON")
+            # Turn stereo on for each window
+            for window in [self.t1_window, self.flair_window, self.swi_window, self.phase_window]:
+                if window:
+                    # If not already set, ensure the window is stereo-capable
+                    window.SetStereoCapableWindow(True)  
+                    window.SetStereoTypeToCrystalEyes()
+                    window.StereoRenderOn()
+                    window.Render()
+        else:
+            self.stereo_button.setText("Stereo OFF")
+            # Turn stereo off for each window
+            for window in [self.t1_window, self.flair_window, self.swi_window, self.phase_window]:
+                if window:
+                    window.SetStereoCapableWindow(False)  
+                    window.StereoRenderOff()
+                    window.Render()
+    """
+
     def update_volume_lighting(self, modality_name):
         """
         Updates the lighting properties of the volume associated with the given modality.

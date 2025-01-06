@@ -12,8 +12,8 @@ class VolumePropertyManager:
 
         self.volume_property = vtk.vtkVolumeProperty()
         self.volume_property.ShadeOn()
-        
-                   
+
+
         # Enhanced lighting properties for better depth perception
         self.volume_property.SetAmbient(0.4)
         self.volume_property.SetDiffuse(0.6)
@@ -244,7 +244,7 @@ class VolumeRenderer:
 
         self.window.SetStereoCapableWindow(True)
         self.window.SetStereoTypeToCrystalEyes()
-        self.window.StereoRenderOn()    
+        self.window.StereoRenderOn()
         
         self.interactor = self.window.GetInteractor()
         

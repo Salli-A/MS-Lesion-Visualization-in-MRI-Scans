@@ -558,6 +558,36 @@ class MainWindowUI(QMainWindow):
         self.prl_opacity_slider.valueChanged.connect(
             lambda value: self.prl_opacity_value.setText(f"{value/100:.1f}")
         )
+        
+        # Stereo Toggle
+        #self.stereo_button = QPushButton("Stereo OFF")
+        #self.stereo_button.setCheckable(True)
+        #self.stereo_button.setChecked(False)
+        #self.stereo_button.setStyleSheet("""
+        #    QPushButton {
+        #        background-color: #404040;
+        #        color: white;
+        #        border: 1px solid #707070;
+        #        border-radius: 4px;
+        #        font-size: 11pt;
+        #        padding: 4px 8px;
+        #    }
+        #    QPushButton:hover {
+        #        background-color: #505050;
+        #    }
+        #    QPushButton:checked {
+        #        background-color: #0078D7;
+        #    }
+        #""")
+
+        # Connect the button click to a toggle method
+        #self.stereo_button.clicked.connect(self.toggleStereo)
+
+        #layout.addWidget(self.stereo_button)
+
+
+
+        
 
     def createModalityShaderPanel(self, modality_name):
         """
