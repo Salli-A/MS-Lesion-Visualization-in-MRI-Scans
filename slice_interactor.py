@@ -107,8 +107,14 @@ class SlicePlanes:
     def setSliceThickness(self, thickness):
         """Update slice thickness and notify renderers."""
         self.thickness = thickness
-        self.step = thickness / 2
         self._updateCroppingPlanes()
+
+        
+    def setStepSize(self, step_size):
+        """Update step size adjust view."""
+        self.step = step_size
+        self._updateCroppingPlanes()
+        
         
         # Update volume properties in all renderers
         for renderer in self.renderer_instances:

@@ -230,8 +230,9 @@ class VolumeRenderer:
                 item.widget().deleteLater()
                 
     def _setup_vtk_widget(self):
-        """Create and setup VTK widget in Qt frame."""
-        self.vtk_widget = QVTKRenderWindowInteractor(self.frame)
+
+        """Create and set up VTK widget in Qt frame."""
+        self.vtk_widget = QVTKRenderWindowInteractor(self.frame, stereo=1)
         self.layout.addWidget(self.vtk_widget)
         
         self.renderer = vtk.vtkRenderer()
@@ -239,7 +240,12 @@ class VolumeRenderer:
         
         self.window = self.vtk_widget.GetRenderWindow()
         self.window.AddRenderer(self.renderer)
-        
+
+        # Enable stereo rendering - May need fine tuning for distance 
+        self.window.SetStereoCapableWindow(True)
+        self.window.SetStereoTypeToCrystalEyes()
+        self.window.StereoRenderOn()
+            
         self.interactor = self.window.GetInteractor()
         
     def _create_pipeline(self):
@@ -354,11 +360,10 @@ class VolumeRenderer:
         
     def _setup_volume(self, mapper, property):
         """Create and return volume with specified mapper and property."""
-        volume = vtk.vtkVolume()
-        volume.SetMapper(mapper)
-        volume.SetProperty(property)
-        return volume
-            
+        self.volume = vtk.vtkVolume()
+        self.volume.SetMapper(mapper)
+        self.volume.SetProperty(property)
+
     def _add_bounds_outline(self):
         """Add white outline showing volume bounds."""
         outline = vtk.vtkOutlineFilter()
@@ -382,4 +387,4 @@ class VolumeRenderer:
         
     def get_window_and_interactor(self):
         """Return render window and interactor for external use."""
-        return self.window, self.interactor
+        return self.window, self.interactor, self.volume
