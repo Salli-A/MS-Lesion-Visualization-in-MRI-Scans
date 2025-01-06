@@ -12,23 +12,10 @@
 
 ## Needs to be done:
 
-- Fix the reading of image files.
-- Change camera view with coronal/axial (look into findBounds and setSLiceDirection on slice_interactor.py)
-- Fix rotations of swi and phase (not orientated in the same way as t1 and flair)
-    - Applying userTransformations changes slicing plane rotation as well (causing a mix up between axial, coronal, sagittal between modalities - seen by putting true on swi_phase_modality in renderPlaneVolume),
-     possible fixes:
-        - Seperate handling of t1/flair and swi/phase with seperate volume renders and slice interactor functions?
-        - Apply rotation/ change axis before inserting into rendering pipeline?
-    - Make sure that the modalities are registered since the SWI/phase had different orientation?
-- Fix color and opacity transfer functions for modalities
-    - Seperate transfer functions for each modality
-    - Automatic based on histogram? Adjustable (pehaps could be good to do on per slice basis?)?
 - Needs animation (maybe the way the camera sync is done qualifies as an animation as it makes use of timers?)
     - Animation of lesions growth (needs the lesion mask development) 
 - Needs surface reconstruction (Perhaps of the the lesion mask?)
 - Fused visulization across modalities (phase omdatlity with swi?) or add features derived from the scans (gradients or derivatives?)
-- Change step sice, currently always thickness/2 (seperate step size from setSliceThickness in slice_interactor.py)
-- Create stero to [CrystalEyes] - double check in the slides which stereo rendering method (just needds to be added with SetStereoTypeToCrystalEyes() and perhaps adding parameters for distance from screen etc.)
 - Add scan to file (eg. csv) instead of just printing
 
 Perhaps:
@@ -51,7 +38,6 @@ Code for rendering all modalaties in the Qt UI.
 - Shared slicing plane across modalities
 - Reset view button
 - Fields for marking scans (PRL, CVS, bad scan, text field)
-- Control instructions
 
 
 ## volume_multimodal.py
