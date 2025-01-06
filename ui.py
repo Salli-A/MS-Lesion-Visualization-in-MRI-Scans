@@ -749,7 +749,7 @@ class MainWindowUI(QMainWindow):
         Returns:
             QGroupBox: Grouped shader controls for the modality
         """
-        group_box = self.create_group_box(f"{modality_name.upper()} Shading")
+        group_box = self.create_group_box(f"{modality_name.upper()} Lighting")
         layout = QVBoxLayout(group_box)
         layout.setSpacing(8)
 
