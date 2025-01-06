@@ -140,21 +140,50 @@ class MRIViewer(MainWindowUI):
     def setup_file_paths(self, base_path):
         """
         Set up file paths based on the provided base directory.
-        Looks for registered files with 'Lreg_' prefix.
+        Sessions are sorted chronologically by their dates.
+        
+        Args:
+            base_path (str): Base directory containing session folders
+            
+        Raises:
+            ValueError: If no session directories found or invalid session directory names
         """
         try:
-            # Find all session directories and sort them
+            # Find all session directories
             self.session_dirs = []
             for item in os.listdir(base_path):
                 if item.startswith('ses-'):
                     full_path = os.path.join(base_path, item)
                     if os.path.isdir(full_path):
-                        self.session_dirs.append(item)
+                        # Verify session directory name format
+                        try:
+                            # Extract date part after 'ses-'
+                            date_str = item[4:]  
+                            # Verify it's a valid 8-digit date (YYYYMMDD)
+                            if len(date_str) == 8 and date_str.isdigit():
+                                year = int(date_str[:4])
+                                month = int(date_str[4:6])
+                                day = int(date_str[6:])
+                                # Basic date validation
+                                if (1900 <= year <= 2100 and 
+                                    1 <= month <= 12 and 
+                                    1 <= day <= 31):
+                                    self.session_dirs.append(item)
+                                else:
+                                    print(f"Warning: Skipping directory with invalid date: {item}")
+                            else:
+                                print(f"Warning: Skipping directory with invalid format: {item}")
+                        except ValueError as ve:
+                            print(f"Warning: Skipping directory with invalid date format: {item}")
+                            continue
             
             if not self.session_dirs:
-                raise ValueError(f"No session directories found in {base_path}")
+                raise ValueError(f"No valid session directories found in {base_path}")
             
-            # Store base path and current session index
+            # Sort sessions chronologically
+            self.session_dirs.sort(key=lambda x: x[4:])  # Sort by date part after 'ses-'
+            
+            # Store base path and initialize with first session
             self.base_path = base_path
             self.current_session_index = 0
             
@@ -164,6 +193,13 @@ class MRIViewer(MainWindowUI):
             # Load initial session
             self.load_session(self.current_session_index)
             
+            # Print sorted sessions for verification
+            print("\nSessions loaded in chronological order:")
+            for session in self.session_dirs:
+                date_str = session[4:]  # Extract date part
+                formatted_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+                print(f"  {session} ({formatted_date})")
+                
         except Exception as e:
             raise ValueError(f"Error setting up file paths: {str(e)}")
 
@@ -233,29 +269,7 @@ class MRIViewer(MainWindowUI):
 
         # Set axial view as default
         self.axial_button.setChecked(True)
-
-    """
-    def toggleStereo(self, checked):
-        if checked:
-            self.stereo_button.setText("Stereo ON")
-            # Turn stereo on for each window
-            for window in [self.t1_window, self.flair_window, self.swi_window, self.phase_window]:
-                if window:
-                    # If not already set, ensure the window is stereo-capable
-                    window.SetStereoCapableWindow(True)  
-                    window.SetStereoTypeToCrystalEyes()
-                    window.StereoRenderOn()
-                    window.Render()
-        else:
-            self.stereo_button.setText("Stereo OFF")
-            # Turn stereo off for each window
-            for window in [self.t1_window, self.flair_window, self.swi_window, self.phase_window]:
-                if window:
-                    window.SetStereoCapableWindow(False)  
-                    window.StereoRenderOff()
-                    window.Render()
-    """
-
+        
     def update_volume_lighting(self, modality_name):
         """
         Updates the lighting properties of the volume associated with the given modality.
@@ -541,6 +555,7 @@ class MRIViewer(MainWindowUI):
         # Connect toggle buttons
         self.lesion_toggle.clicked.connect(self.toggle_lesion_mask)
         self.prl_toggle.clicked.connect(self.toggle_prl_mask)
+        self.mri_toggle.clicked.connect(self.toggle_mri_visibility)
         
         # Connect opacity sliders
         self.lesion_opacity_slider.valueChanged.connect(self.update_lesion_opacity)
@@ -571,6 +586,33 @@ class MRIViewer(MainWindowUI):
             opacity = value / 100.0  # Convert slider value to opacity
             self.mask_overlay.set_prl_opacity(opacity)
             self.render_all()
+    
+    
+    def toggle_mri_visibility(self, checked):
+        """
+        Toggle visibility of MRI volumes while keeping masks visible.
+        Uses volume visibility instead of opacity manipulation to avoid texture size issues.
+        """
+        if checked:
+            self.mri_toggle.setText("Show MRI + Masks")
+        else:
+            self.mri_toggle.setText("Show Masks Only")
+            
+        # Update visibility for all modality volumes
+        volumes = [
+            self.t1_volume,
+            self.flair_volume, 
+            self.swi_volume,
+            self.phase_volume
+        ]
+        
+        for volume in volumes:
+            if volume:
+                # Simply toggle the volume's visibility
+                volume.SetVisibility(checked)
+        
+        # Force render update
+        self.render_all()
 
 def main():
     if len(sys.argv) != 2:

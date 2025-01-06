@@ -721,6 +721,31 @@ class MainWindowUI(QMainWindow):
             lambda value: self.prl_opacity_value.setText(f"{value/100:.1f}")
         )
         
+        # Add toggle for MRI visibility
+        self.mri_toggle = QPushButton("Show MRI + Masks")
+        self.mri_toggle.setCheckable(True)
+        self.mri_toggle.setChecked(True)
+        self.mri_toggle.setStyleSheet("""
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                border: none;
+                padding: 8px;
+                font-size: 11pt;
+                border-radius: 4px;
+            }
+            QPushButton:checked {
+                background-color: #0078D7;
+            }
+            QPushButton:hover {
+                background-color: #505050;
+            }
+            QPushButton:checked:hover {
+                background-color: #1984D8;
+            }
+        """)
+        mask_layout.addWidget(self.mri_toggle)
+        
         # Add the mask group to the main layout
         layout.addWidget(mask_group)
 
