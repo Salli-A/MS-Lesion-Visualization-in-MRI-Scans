@@ -233,6 +233,71 @@ class MRIViewer(MainWindowUI):
 
         # Set axial view as default
         self.axial_button.setChecked(True)
+
+    def update_volume_lighting(self, modality_name):
+        """
+        Updates the lighting properties of the volume associated with the given modality.
+        Retrieves the volume, adjusts its lighting properties based on the sliders, and re-renders.
+        """
+        print("Updating volume lighting")
+        # Retrieve the volume
+        volume = getattr(self, f"{modality_name}_volume", None)
+        if volume is None:
+            raise ValueError(f"No volume found for modality: {modality_name}")
+
+        # Retrieve the volume property
+        volume_property = volume.GetProperty()
+        if not isinstance(volume_property, vtk.vtkVolumeProperty):
+            raise TypeError(f"Invalid property type for volume: {type(volume_property)}")
+
+        # Retrieve slider values
+        ambient_slider = self.shader_sliders[modality_name]["ambient"]
+        diffuse_slider = self.shader_sliders[modality_name]["diffuse"]
+        specular_slider = self.shader_sliders[modality_name]["specular"]
+        spec_power_slider = self.shader_sliders[modality_name]["spec_power"]
+
+        ambient_val = ambient_slider.value() / 100.0
+        diffuse_val = diffuse_slider.value() / 100.0
+        specular_val = specular_slider.value() / 100.0
+        spec_pow_val = float(spec_power_slider.value())
+
+        # Set the volume property lighting values
+        volume_property.SetAmbient(ambient_val)
+        volume_property.SetDiffuse(diffuse_val)
+        volume_property.SetSpecular(specular_val)
+        volume_property.SetSpecularPower(spec_pow_val)
+
+        # Mark volume as modified and render the scene
+        volume.Modified()
+        self.render_all()
+
+        
+
+    def reset_shading(self, modality_name):
+        """
+        Resets the shading parameters for the given modality, or for all modalities
+        if 'modality_name' is None.
+
+        :param modality_name: One of ['t1', 'flair', 'swi', 'phase'] or None
+        """
+
+        volume = getattr(self, f"{modality_name}_volume", None)
+        volume_property = volume.GetProperty()
+
+        # Reset the volume's shading
+        volume_property = volume.GetProperty()
+
+        volume_property.SetAmbient(0.4)
+        volume_property.SetDiffuse(0.6)
+        volume_property.SetSpecular(0.2)
+        volume_property.SetSpecularPower(0.1)
+
+        self.shader_sliders[modality_name]["ambient"].setValue(40)
+        self.shader_sliders[modality_name]["diffuse"].setValue(60)
+        self.shader_sliders[modality_name]["specular"].setValue(20)
+        self.shader_sliders[modality_name]["spec_power"].setValue(10)
+
+        self.render_all()
         
     def next_session(self):
         """Load next session if available"""
@@ -323,7 +388,7 @@ class MRIViewer(MainWindowUI):
             raise
     
     def render_all(self):
-        """Force rendering for camera sync"""
+        """Force rendering"""
         for window in [self.t1_window, self.flair_window, self.swi_window, self.phase_window]:
             if window:  # Check if window exists before rendering
                 window.Render()

@@ -11,13 +11,14 @@ class VolumePropertyManager:
         self.reference_thickness = 10.0  # Reference thickness for normalization
 
         self.volume_property = vtk.vtkVolumeProperty()
-           
+        self.volume_property.ShadeOn()
+        
+                   
         # Enhanced lighting properties for better depth perception
         self.volume_property.SetAmbient(0.4)
         self.volume_property.SetDiffuse(0.6)
         self.volume_property.SetSpecular(0.2)
         self.volume_property.SetSpecularPower(10)
-        
         
     def create_volume_property(self, slice_thickness, optimal_range=None):
         """
