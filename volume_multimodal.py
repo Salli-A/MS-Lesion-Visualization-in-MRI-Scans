@@ -147,32 +147,58 @@ class VolumePropertyManager:
             opacity_tf.AddPoint(1500, 0.2 * opacity_scale)
     
     def _setup_swi_phase_transfer_functions(self, color_tf, opacity_tf, opacity_scale):
-        """Configure transfer functions for SWI phase images with improved vessel visualization."""
-        # Phase data is already normalized to [-π, π]
+        """
+        Configure transfer functions for SWI phase images with colormaps optimized
+        to avoid interference with mask overlays.
+        """
         import math
         
-        # Paramagnetic effects (negative phase) - cool colors
-        color_tf.AddRGBPoint(-math.pi, 0.5, 0.0, 0.8)    # Purple
-        color_tf.AddRGBPoint(-math.pi/2, 0.0, 0.4, 1.0)  # Blue
+        # Define colormaps that avoid reds and greens (used by masks)
+        colormaps = {
+            'BlueYellow': [  # Blue-Yellow diverging colormap (default)
+                (-math.pi, 0.0, 0.09803921568627451, 0.3490196078431373),      # Dark blue
+                (-math.pi/2, 0.0, 0.3333333333333333, 0.6470588235294118),    # Medium blue
+                (-math.pi/4, 0.4745098039215686, 0.6235294117647059, 0.8156862745098039),  # Light blue
+                (0, 0.9607843137254902, 0.9607843137254902, 0.9607843137254902),          # White
+                (math.pi/4, 0.9921568627450981, 0.9058823529411765, 0.4980392156862745),   # Light yellow
+                (math.pi/2, 0.9921568627450981, 0.7529411764705882, 0.2980392156862745),   # Medium yellow
+                (math.pi, 0.8509803921568627, 0.6470588235294118, 0.1254901960784314)      # Dark yellow
+            ],
+            'PurpleCyan': [  # Purple-Cyan diverging colormap (alternative)
+                (-math.pi, 0.4588235294117647, 0.0, 0.6078431372549019),      # Dark purple
+                (-math.pi/2, 0.6196078431372549, 0.2549019607843137, 0.7254901960784313),  # Medium purple
+                (-math.pi/4, 0.8078431372549019, 0.5803921568627451, 0.8274509803921568),  # Light purple
+                (0, 0.9607843137254902, 0.9607843137254902, 0.9607843137254902),          # White
+                (math.pi/4, 0.5019607843137255, 0.8705882352941177, 0.8705882352941177),   # Light cyan
+                (math.pi/2, 0.1215686274509804, 0.7372549019607844, 0.7372549019607844),   # Medium cyan
+                (math.pi, 0.0196078431372549, 0.5098039215686274, 0.5098039215686274)      # Dark cyan
+            ]
+        }
         
-        # Near-zero phase - grayscale
-        color_tf.AddRGBPoint(-math.pi/4, 0.4, 0.4, 0.4)  # Dark gray
-        color_tf.AddRGBPoint(0, 0.5, 0.5, 0.5)           # Mid gray
-        color_tf.AddRGBPoint(math.pi/4, 0.6, 0.6, 0.6)   # Light gray
+        # Select colormap
+        selected_map = colormaps['BlueYellow']  # Default to BlueYellow
         
-        # Diamagnetic effects (positive phase) - warm colors
-        color_tf.AddRGBPoint(math.pi/2, 1.0, 0.6, 0.0)   # Orange
-        color_tf.AddRGBPoint(math.pi, 1.0, 0.9, 0.0)     # Yellow
+        # Clear existing points
+        color_tf.RemoveAllPoints()
         
-        # Enhanced opacity for better phase contrast
-        opacity_tf.AddPoint(-math.pi, 0.8 * opacity_scale)
-        opacity_tf.AddPoint(-math.pi/2, 0.6 * opacity_scale)
-        opacity_tf.AddPoint(0, 0.3 * opacity_scale)
-        opacity_tf.AddPoint(math.pi/2, 0.6 * opacity_scale)
-        opacity_tf.AddPoint(math.pi, 0.8 * opacity_scale)
+        # Add color points from selected colormap
+        for position, r, g, b in selected_map:
+            color_tf.AddRGBPoint(position, r, g, b)
         
-        # Use HSV interpolation for smoother color transitions
-        color_tf.SetColorSpace(vtk.VTK_CTF_HSV)
+        # Configure opacity transfer function for phase data
+        opacity_tf.RemoveAllPoints()
+        
+        # Enhanced opacity mapping
+        opacity_tf.AddPoint(-math.pi, 0.9 * opacity_scale)      # High opacity for extreme negative phase
+        opacity_tf.AddPoint(-math.pi/2, 0.7 * opacity_scale)    # Reduced opacity for moderate negative phase
+        opacity_tf.AddPoint(-math.pi/4, 0.5 * opacity_scale)    # Lower opacity near zero
+        opacity_tf.AddPoint(0, 0.4 * opacity_scale)             # Minimum opacity at zero phase
+        opacity_tf.AddPoint(math.pi/4, 0.5 * opacity_scale)     # Lower opacity near zero
+        opacity_tf.AddPoint(math.pi/2, 0.7 * opacity_scale)     # Increased opacity for moderate positive phase
+        opacity_tf.AddPoint(math.pi, 0.9 * opacity_scale)       # High opacity for extreme positive phase
+        
+        # Use linear interpolation for smoother transitions
+        color_tf.SetColorSpace(vtk.VTK_CTF_RGB)
     
     def _setup_default_transfer_functions(self, color_tf, opacity_tf, opacity_scale, optimal_range=None):
         """Configure default transfer functions for unknown modalities."""

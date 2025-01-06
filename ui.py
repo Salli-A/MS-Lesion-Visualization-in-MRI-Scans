@@ -741,7 +741,7 @@ class MainWindowUI(QMainWindow):
     def createModalityShaderPanel(self, modality_name):
         """
         Create a shader control panel for a specific modality with ambient, diffuse,
-        specular, and specular power controls.
+        specular, and specular power controls. Each slider includes a value display.
         
         Args:
             modality_name (str): Name of the modality (t1, swi, flair, phase)
@@ -753,7 +753,7 @@ class MainWindowUI(QMainWindow):
         layout = QVBoxLayout(group_box)
         layout.setSpacing(8)
 
-        # Initialize storage for this modality's sliders
+        # Initialize storage for this modality's sliders and value labels
         self.lighting_sliders[modality_name] = {}
 
         def create_styled_slider():
@@ -778,6 +778,19 @@ class MainWindowUI(QMainWindow):
             """)
             return slider
 
+        def create_value_label():
+            """Create a consistently styled value label"""
+            label = QLabel()
+            label.setStyleSheet("""
+                QLabel {
+                    color: white;
+                    font-size: 11pt;
+                    min-width: 45px;
+                    padding: 0 5px;
+                }
+            """)
+            return label
+
         # Configure shader parameters
         shader_params = [
             ("Ambient", "ambient", 40),     # Default 0.40
@@ -800,18 +813,34 @@ class MainWindowUI(QMainWindow):
             # Set appropriate range based on parameter
             if param_name == "spec_power":
                 slider.setRange(1, 50)
+                value_label = create_value_label()
+                value_label.setText(f"{default_value}")
             else:
                 slider.setRange(0, 100)
+                value_label = create_value_label()
+                value_label.setText(f"{default_value/100:.2f}")
             
             slider.setValue(default_value)
             
             # Add to layout
             param_layout.addWidget(label)
             param_layout.addWidget(slider)
+            param_layout.addWidget(value_label)
             layout.addLayout(param_layout)
             
-            # Store slider reference
+            # Store slider and value label references
             self.lighting_sliders[modality_name][param_name] = slider
+            self.lighting_sliders[modality_name][f"{param_name}_value"] = value_label
+
+            # Connect slider to value label update
+            if param_name == "spec_power":
+                slider.valueChanged.connect(
+                    lambda value, label=value_label: label.setText(f"{value}")
+                )
+            else:
+                slider.valueChanged.connect(
+                    lambda value, label=value_label: label.setText(f"{value/100:.2f}")
+                )
 
         # Create reset button with consistent styling
         reset_layout = QHBoxLayout()

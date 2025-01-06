@@ -37,42 +37,43 @@ class MaskOverlay:
         self.lesion_mask = lesion_files[0]
         self.prl_mask = prl_files[0]
         
-    def create_mask_actor(self, mask_file, color):
+    def create_mask_actor(self, mask_file, mask_type):
         """Create a VTK actor for solid mask visualization using volume rendering."""
-        # Read mask data
         reader = vtk.vtkNIFTIImageReader()
         reader.SetFileName(mask_file)
         reader.Update()
         
-        # Create volume mapper
         mapper = vtk.vtkGPUVolumeRayCastMapper()
         mapper.SetInputConnection(reader.GetOutputPort())
         mapper.CroppingOn()
         mapper.SetCroppingRegionFlags(vtk.VTK_CROP_SUBVOLUME)
         
-        # Create transfer functions for solid rendering of binary mask
+        # Brighter colors for maximum visibility
+        mask_colors = {
+            'lesion': (1.0, 0.2, 1.0),  # Bright magenta
+            'prl': (0.0, 1.0, 0.0)      # Pure bright green
+        }
+        
+        color = mask_colors[mask_type]
+        
         color_tf = vtk.vtkColorTransferFunction()
-        color_tf.AddRGBPoint(0, 0, 0, 0)    # transparent for background (0)
-        color_tf.AddRGBPoint(1, *color)      # solid color for mask (1)
+        color_tf.AddRGBPoint(0, 0, 0, 0)
+        color_tf.AddRGBPoint(1, *color)
         
         opacity_tf = vtk.vtkPiecewiseFunction()
-        opacity_tf.AddPoint(0, 0)            # fully transparent for background
-        opacity_tf.AddPoint(0.5, 0)          # ensure clean transition
-        opacity_tf.AddPoint(1, 1)            # fully opaque for mask
+        opacity_tf.AddPoint(0, 0)
+        opacity_tf.AddPoint(1, 1)
         
-        # Set up volume properties with enhanced shading
         volume_property = vtk.vtkVolumeProperty()
         volume_property.SetColor(color_tf)
         volume_property.SetScalarOpacity(opacity_tf)
         volume_property.SetInterpolationTypeToLinear()
-        # Enable shading for better depth perception
         volume_property.ShadeOn()
-        volume_property.SetAmbient(0.3)      # ambient lighting for better visibility
-        volume_property.SetDiffuse(0.7)      # diffuse reflection for surface detail
-        volume_property.SetSpecular(0.2)     # specular highlights for 3D effect
-        volume_property.SetSpecularPower(8)  # controls the size of specular highlights
+        volume_property.SetAmbient(1.0)    # Maximum ambient light
+        volume_property.SetDiffuse(1.0)    # Maximum diffuse reflection
+        volume_property.SetSpecular(0.3)   # Slightly increased specular
+        volume_property.SetSpecularPower(6) # Adjusted for broader highlights
         
-        # Create volume
         volume = vtk.vtkVolume()
         volume.SetMapper(mapper)
         volume.SetProperty(volume_property)
@@ -88,9 +89,9 @@ class MaskOverlay:
         
         # Create new volumes with proper mapping
         lesion_volume, lesion_mapper = self.create_mask_actor(
-            self.lesion_mask, (1, 0, 0))  # Red for lesions
+            self.lesion_mask, 'lesion')  
         prl_volume, prl_mapper = self.create_mask_actor(
-            self.prl_mask, (0, 1, 0))      # Green for PRLs
+            self.prl_mask, 'prl')      
         
         # Add to renderer
         renderer.AddVolume(lesion_volume)
