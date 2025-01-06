@@ -269,6 +269,48 @@ class MainWindowUI(QMainWindow):
         thickness_controls.addWidget(self.thickness_value)
         thickness_layout.addLayout(thickness_controls)
         layout.addWidget(thickness_group)
+
+         # Step size
+        step_group = self.create_group_box("Step size")
+        step_layout = QVBoxLayout(step_group)
+        
+        step_controls = QHBoxLayout()
+        
+        self.step_slider = QSlider(Qt.Horizontal)
+        self.step_slider.setStyleSheet("""
+            QSlider::groove:horizontal {
+                height: 8px;
+                background: #404040;
+                border-radius: 4px;
+            }
+            QSlider::handle:horizontal {
+                background: #0078D7;
+                border: none;
+                width: 18px;
+                margin: -5px 0;
+                border-radius: 9px;
+            }
+            QSlider::handle:horizontal:hover {
+                background: #1984D8;
+            }
+        """)
+        self.step_slider.setRange(1, 15)
+        self.step_slider.setValue(5)
+        
+        self.step_value = QLabel("5")
+        self.step_value.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-size: 11pt;
+                min-width: 30px;
+                padding: 0 5px;
+            }
+        """)
+        
+        step_controls.addWidget(self.step_slider)
+        step_controls.addWidget(self.step_value)
+        step_layout.addLayout(step_controls)
+        layout.addWidget(step_group)
         
         # Mark Scan
         mark_group = self.create_group_box("Mark Scan")
