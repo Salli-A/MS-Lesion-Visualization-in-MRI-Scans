@@ -432,7 +432,7 @@ class MRIViewer(MainWindowUI):
             self.surface_actor.SetMapper(surface_mapper)
             self.surface_actor.GetProperty().SetColor(1.0, 1.0, 0.0)  # Yellow surface
 
-            # **Important**: set the actor’s origin to its own center
+            # Set the actor’s origin to its own center for animation
             self.surface_actor.SetOrigin(center)
 
             # Add the actor to the T1 renderer
