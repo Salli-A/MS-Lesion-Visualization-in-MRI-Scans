@@ -5,11 +5,22 @@ from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 class VolumePropertyManager:
     """Manages volume rendering properties with automated range optimization and slice thickness compensation."""
     
-    def __init__(self):
+    def __init__(self, modality):
+        self.modality = modality
         self.base_opacity_scale = 1.0
         self.reference_thickness = 10.0  # Reference thickness for normalization
+
+        self.volume_property = vtk.vtkVolumeProperty()
+        self.volume_property.ShadeOn()
+
+
+        # Enhanced lighting properties for better depth perception
+        self.volume_property.SetAmbient(0.4)
+        self.volume_property.SetDiffuse(0.6)
+        self.volume_property.SetSpecular(0.2)
+        self.volume_property.SetSpecularPower(10)
         
-    def create_volume_property(self, modality, slice_thickness, optimal_range=None):
+    def create_volume_property(self, slice_thickness, optimal_range=None):
         """
         Create volume property with thickness-compensated transfer functions and optimal range.
         
@@ -23,30 +34,21 @@ class VolumePropertyManager:
         color_tf = vtk.vtkColorTransferFunction()
         opacity_tf = vtk.vtkPiecewiseFunction()
         
-        if modality == 't1':
+        if self.modality == 't1':
             self._setup_t1_transfer_functions(color_tf, opacity_tf, opacity_scale, optimal_range)
-        elif modality == 'flair':
+        elif self.modality == 'flair':
             self._setup_flair_transfer_functions(color_tf, opacity_tf, opacity_scale, optimal_range)
-        elif modality == 'swi_mag':
+        elif self.modality == 'swi_mag':
             self._setup_swi_mag_transfer_functions(color_tf, opacity_tf, opacity_scale, optimal_range)
-        elif modality == 'swi_phase':
+        elif self.modality == 'swi_phase':
             self._setup_swi_phase_transfer_functions(color_tf, opacity_tf, opacity_scale)
         else:
             self._setup_default_transfer_functions(color_tf, opacity_tf, opacity_scale, optimal_range)
         
-        volume_property = vtk.vtkVolumeProperty()
-        volume_property.SetColor(color_tf)
-        volume_property.SetScalarOpacity(opacity_tf)
-        volume_property.SetInterpolationTypeToLinear()
-        volume_property.ShadeOn()
-        
-        # Enhanced lighting properties for better depth perception
-        volume_property.SetAmbient(0.4)
-        volume_property.SetDiffuse(0.6)
-        volume_property.SetSpecular(0.2)
-        volume_property.SetSpecularPower(10)
-        
-        return volume_property
+        self.volume_property.SetColor(color_tf)
+        self.volume_property.SetScalarOpacity(opacity_tf)
+
+        return self.volume_property
     
     def _calculate_opacity_scale(self, slice_thickness):
         """Calculate opacity scaling factor based on slice thickness."""
@@ -195,7 +197,7 @@ class VolumePropertyManager:
 class VolumeRenderer:
     """Handles 3D volume rendering of NIFTI images in a Qt widget with enhanced visualization."""
     
-    def __init__(self, viewer_instance, frame, layout, filename, show_bounds=True, modality=None):
+    def __init__(self, viewer_instance, frame, layout, filename, show_bounds=False, modality=None):
         """
         Initialize the volume renderer with enhanced visualization capabilities.
         
@@ -215,7 +217,7 @@ class VolumeRenderer:
         self.show_bounds = show_bounds
         
         # Initialize volume property manager
-        self.property_manager = VolumePropertyManager()
+        self.property_manager = VolumePropertyManager(self.modality)
         
         # Setup rendering pipeline
         self._clear_layout()
@@ -231,7 +233,7 @@ class VolumeRenderer:
                 
     def _setup_vtk_widget(self):
         """Create and setup VTK widget in Qt frame."""
-        self.vtk_widget = QVTKRenderWindowInteractor(self.frame)
+        self.vtk_widget = QVTKRenderWindowInteractor(self.frame, stereo=1)
         self.layout.addWidget(self.vtk_widget)
         
         self.renderer = vtk.vtkRenderer()
@@ -239,6 +241,10 @@ class VolumeRenderer:
         
         self.window = self.vtk_widget.GetRenderWindow()
         self.window.AddRenderer(self.renderer)
+
+        self.window.SetStereoCapableWindow(True)
+        self.window.SetStereoTypeToCrystalEyes()
+        self.window.StereoRenderOn()
         
         self.interactor = self.window.GetInteractor()
         
@@ -305,7 +311,6 @@ class VolumeRenderer:
             # Create volume visualization pipeline with optimal range
             current_thickness = self.viewer.SlicePlanes.thickness if hasattr(self.viewer, 'SlicePlanes') else 10.0
             volume_property = self.property_manager.create_volume_property(
-                self.modality, 
                 current_thickness,
                 optimal_range
             )
@@ -375,11 +380,12 @@ class VolumeRenderer:
         
     def update_volume_property(self, thickness):
         """Update volume property when slice thickness changes."""
+        
         if hasattr(self, 'volume') and self.modality:
-            new_property = self.property_manager.create_volume_property(self.modality, thickness)
+            new_property = self.property_manager.create_volume_property(thickness)
             self.volume.SetProperty(new_property)
             self.window.Render()
         
     def get_window_and_interactor(self):
         """Return render window and interactor for external use."""
-        return self.window, self.interactor
+        return self.window, self.interactor, self.volume
