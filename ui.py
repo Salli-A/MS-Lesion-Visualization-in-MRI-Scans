@@ -116,6 +116,16 @@ class MainWindowUI(QMainWindow):
         self.control_scroll.setWidgetResizable(True)
         self.control_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.control_scroll.setStyleSheet("QScrollArea { border: none; }")
+        self.control_scroll.setStyleSheet("""
+            QScrollArea {
+                background-color: #1E1E1E;
+                border: none;
+            }
+            QScrollArea QWidget {
+                background-color: #1E1E1E;
+            }
+        """)
+
 
         # Control panel content
         control_panel = QWidget()
@@ -180,7 +190,7 @@ class MainWindowUI(QMainWindow):
             view_grid.setRowStretch(i, 1)
 
         # Create collapsible shading controls
-        self.shading_toggle = QPushButton("Show Shading Controls")
+        self.shading_toggle = QPushButton("Show Lighting Controls")
         self.shading_toggle.setCheckable(True)
         self.shading_toggle.setStyleSheet("""
             QPushButton {
