@@ -11,7 +11,7 @@ from PyQt5.QtGui import QFont, QPalette, QColor
 class MainWindowUI(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.shader_sliders = {}
+        self.lighting_sliders = {}
         self.control_panel_visible = True
         self.shading_visible = False
         self.setupUi()
@@ -754,7 +754,7 @@ class MainWindowUI(QMainWindow):
         layout.setSpacing(8)
 
         # Initialize storage for this modality's sliders
-        self.shader_sliders[modality_name] = {}
+        self.lighting_sliders[modality_name] = {}
 
         def create_styled_slider():
             """Create a consistently styled slider for shader controls"""
@@ -811,7 +811,7 @@ class MainWindowUI(QMainWindow):
             layout.addLayout(param_layout)
             
             # Store slider reference
-            self.shader_sliders[modality_name][param_name] = slider
+            self.lighting_sliders[modality_name][param_name] = slider
 
         # Create reset button with consistent styling
         reset_layout = QHBoxLayout()
@@ -834,11 +834,11 @@ class MainWindowUI(QMainWindow):
         layout.addLayout(reset_layout)
 
         # Store reset button reference
-        self.shader_sliders[modality_name]["reset_btn"] = reset_btn
+        self.lighting_sliders[modality_name]["reset_btn"] = reset_btn
 
         # Connect all signals for this modality
         for param_name in ["ambient", "diffuse", "specular", "spec_power"]:
-            slider = self.shader_sliders[modality_name][param_name]
+            slider = self.lighting_sliders[modality_name][param_name]
             slider.valueChanged.connect(
                 partial(self.update_volume_lighting, modality_name)
             )
