@@ -526,8 +526,14 @@ class MRIViewer(MainWindowUI):
         self.SlicePlanes.setStepSize(step_size)
 
     def submit(self):
-        """Handle form submission"""
-        print("Submitting findings:")
+        """
+        Handle form submission and save findings to CSV file.
+        CSV file is saved in the base directory of the input folder.
+        Data is appended to an existing CSV file or a new one is created if it doesn't exist.
+        """
+        # Get current timestamp
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         # Get checkbox states
         findings = {
@@ -539,23 +545,81 @@ class MRIViewer(MainWindowUI):
         # Get comments
         comments = self.notes_field.toPlainText().strip()
         
-        # Print findings
+        # Print findings to console
+        print("Submitting findings:")
         for finding, present in findings.items():
             if present:
                 print(f"- {finding}: Yes")
-        
         if comments:
             print(f"Comments: {comments}")
         
-        # Reset form
-        self.notes_field.clear()
-        self.quality_checkbox.setChecked(False)
-        self.prl_checkbox.setChecked(False)
-        self.cvs_checkbox.setChecked(False)
+        # Prepare data for CSV
+        import csv
+        import os
         
-        # Optional: save to file or database here
+        # Create findings directory if it doesn't exist
+        findings_dir = os.path.dirname(self.base_path)  # Get parent directory of subject folder
+        csv_filename = "mri_findings.csv"
+        csv_file = os.path.join(findings_dir, csv_filename)
         
-        print("Submission complete")
+        print(f"Saving findings to: {csv_file}")
+        
+        file_exists = os.path.isfile(csv_file)
+        
+        # Define fieldnames for CSV
+        fieldnames = [
+            'timestamp',
+            'subject_id',
+            'session_id',
+            'bad_quality_mri',
+            'prl_present',
+            'cvs_present',
+            'comments'
+        ]
+        
+        # Prepare row data
+        row_data = {
+            'timestamp': timestamp,
+            'subject_id': self.subject_id.text(),
+            'session_id': self.session_id.text(),
+            'bad_quality_mri': 'Yes' if findings["Bad quality MRI"] else 'No',
+            'prl_present': 'Yes' if findings["Perivascular Rim Lesions (PRL)"] else 'No',
+            'cvs_present': 'Yes' if findings["Central Vein Signs (CVS)"] else 'No',
+            'comments': comments.replace('\n', ' ').replace('\r', '')  # Flatten comments for CSV
+        }
+        
+        try:
+            # Open file in append mode
+            with open(csv_file, mode='a', newline='', encoding='utf-8') as file:
+                writer = csv.DictWriter(file, fieldnames=fieldnames)
+                
+                # Write header if file is new
+                if not file_exists:
+                    writer.writeheader()
+                    print(f"Created new findings file: {csv_file}")
+                
+                # Write findings
+                writer.writerow(row_data)
+                
+            print(f"Findings saved successfully")
+            
+            # Reset form
+            self.notes_field.clear()
+            self.quality_checkbox.setChecked(False)
+            self.prl_checkbox.setChecked(False)
+            self.cvs_checkbox.setChecked(False)
+            
+            print("Submission complete")
+            
+        except PermissionError as e:
+            print(f"Permission denied when saving to {csv_file}")
+            print(f"Please check file permissions: {str(e)}")
+            return False
+        except Exception as e:
+            print(f"Error saving findings to CSV: {str(e)}")
+            return False
+        
+        return True
     
     def connect_mask_controls(self):
         """Connect mask control UI elements to their handlers."""
