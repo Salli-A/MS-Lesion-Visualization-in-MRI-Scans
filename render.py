@@ -367,11 +367,9 @@ class MRIViewer(MainWindowUI):
         'checked' is True if toggled on, False if toggled off.
         """
         if checked:
-            # Build the surface if not already built
             if not hasattr(self, 'surface_actor'):
                 self.build_surface_actor()
             
-
             # Make sure surface actor is visible
             self.surface_actor.SetVisibility(True)
 
@@ -417,18 +415,18 @@ class MRIViewer(MainWindowUI):
             t1_port = self.t1_renderer.reader.GetOutputPort()
 
             # Create a marching cubes filter
-            isoSurface = vtk.vtkMarchingCubes()
-            isoSurface.SetInputConnection(t1_port)
-            isoSurface.SetValue(0, 500)  # Example threshold, adjust as needed
-            isoSurface.Update()
+            surface = vtk.vtkMarchingCubes()
+            surface.SetInputConnection(t1_port)
+            surface.SetValue(0, 500)  # Example threshold, adjust as needed
+            surface.Update()
 
             # Get the surface data to compute its center
-            poly_data = isoSurface.GetOutput()
+            poly_data = surface.GetOutput()
             center = poly_data.GetCenter()  # (x, y, z) of geometry center
 
             # Create a polydata mapper
             surface_mapper = vtk.vtkPolyDataMapper()
-            surface_mapper.SetInputConnection(isoSurface.GetOutputPort())
+            surface_mapper.SetInputConnection(surface.GetOutputPort())
 
             # Create an actor
             self.surface_actor = vtk.vtkActor()
